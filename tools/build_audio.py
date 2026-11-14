@@ -58,7 +58,8 @@ if __name__ == '__main__':
                            'drink': ('1-37226-A-29.wav', 1.8)}.items():
         write(out, call(read(src), ln))
     for i, s in enumerate(shots(read('4-218304-A-25.wav'), 4, 0.22)): write(f'step{i + 1}', s, 0.7)
-    for i, s in enumerate(shots(read('1-50623-A-15.wav'), 3, 0.45, gap=0.4)): write(f'splash{i + 1}', s, 0.8)
+    for i, s in enumerate(shots(read('1-50623-A-15.wav'), 3, 0.45, gap=0.4)):
+        if i != 1: write(f'splash{i + 1}', s, 0.8)   # splash2 = splash3 slowed to 85% (the middle hit in the clip is too short)
     write('click', shots(read('2-152964-A-31.wav'), 1, 0.08)[0], 0.6)
     write('thud', shots(read('1-103995-A-30.wav'), 1, 0.3)[0], 0.9)
     tot = 0

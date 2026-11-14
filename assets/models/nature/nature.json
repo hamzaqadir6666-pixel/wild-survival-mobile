@@ -4,56 +4,64 @@
   "tris": 600,
   "height": 3.33,
   "radius": 2.8,
-  "lod1_tris": 148
+  "lod1_tris": 148,
+  "lod2_tris": 54
  },
  "tree_big": {
   "source": "Willow_4",
   "tris": 560,
   "height": 3.41,
   "radius": 2.06,
-  "lod1_tris": 138
+  "lod1_tris": 138,
+  "lod2_tris": 48
  },
  "tree_a": {
   "source": "CommonTree_2",
   "tris": 519,
   "height": 3.05,
   "radius": 1.56,
-  "lod1_tris": 130
+  "lod1_tris": 130,
+  "lod2_tris": 50
  },
  "tree_b": {
   "source": "CommonTree_5",
   "tris": 480,
   "height": 2.53,
   "radius": 1.4,
-  "lod1_tris": 118
+  "lod1_tris": 118,
+  "lod2_tris": 44
  },
  "tree_c": {
   "source": "Willow_3",
   "tris": 460,
   "height": 2.35,
   "radius": 1.82,
-  "lod1_tris": 120
+  "lod1_tris": 120,
+  "lod2_tris": 42
  },
  "tree_d": {
   "source": "CommonTree_1",
   "tris": 518,
   "height": 2.48,
   "radius": 1.58,
-  "lod1_tris": 130
+  "lod1_tris": 130,
+  "lod2_tris": 48
  },
  "palm_a": {
   "source": "PalmTree_1",
   "tris": 420,
   "height": 4.47,
   "radius": 1.62,
-  "lod1_tris": 112
+  "lod1_tris": 112,
+  "lod2_tris": 48
  },
  "palm_b": {
   "source": "PalmTree_4",
   "tris": 378,
   "height": 3.46,
   "radius": 1.4,
-  "lod1_tris": 98
+  "lod1_tris": 98,
+  "lod2_tris": 44
  },
  "banana": {
   "source": "Plant_1",

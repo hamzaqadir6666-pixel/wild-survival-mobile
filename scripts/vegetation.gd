@@ -18,12 +18,14 @@ const TYPES := {
 var material: ShaderMaterial
 var meshes := {}
 var lod_meshes := {}
+var lod2_meshes := {}
 var _data := PackedByteArray()
 var _count := 0
 var _pos := 0
 # parallel arrays, one entry per MultiMeshInstance
 var _nodes: Array[MultiMeshInstance3D] = []
 var _far_nodes: Array = []          # lod1 partner or null
+var _far2_nodes: Array = []         # lod2 partner or null
 var _cx := PackedFloat32Array()
 var _cz := PackedFloat32Array()
 var _kind := PackedByteArray()
@@ -48,6 +50,8 @@ func setup() -> void:
 		meshes[t] = mesh_from("res://assets/models/nature/%s.glb" % t)
 		var lp := "res://assets/models/nature/%s_lod1.glb" % t
 		if ResourceLoader.exists(lp): lod_meshes[t] = mesh_from(lp)
+		var lp2 := "res://assets/models/nature/%s_lod2.glb" % t
+		if ResourceLoader.exists(lp2): lod2_meshes[t] = mesh_from(lp2)
 	_data = FileAccess.get_file_as_bytes("res://assets/world/veg.bin")
 	_count = _data.decode_u32(0)
 	_pos = 0
@@ -103,6 +107,11 @@ func _build_group() -> void:
 	if lod_meshes.has(tname):
 		far = _make(lod_meshes[tname], xf)
 		far.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var far2 = null
+	if lod2_meshes.has(tname):
+		far2 = _make(lod2_meshes[tname], xf)
+		far2.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_far2_nodes.append(far2)
 	_nodes.append(near); _far_nodes.append(far); _cx.append(cx); _cz.append(cz); _kind.append(cfg[0])
 	instance_total += xf.size()
 
@@ -124,7 +133,8 @@ func update_visibility(cam: Vector3, all := false) -> void:
 	var n := _nodes.size()
 	if n == 0: return
 	var steps := n if all else mini(n, 260)
-	var tree_near: float = Cfg.v("tree_near") + 40.0
+	var tree_near: float = Cfg.v("tree_near") + 32.0
+	var tree_mid: float = Cfg.v("tree_mid") + 32.0
 	var tree_far: float = float(Cfg.v("view")) - 10.0
 	var bush: float = Cfg.v("bush") + 30.0
 	var small: float = Cfg.v("small") + 30.0
@@ -136,10 +146,13 @@ func update_visibility(cam: Vector3, all := false) -> void:
 		var d2 := dx * dx + dz * dz
 		var k := _kind[i]
 		if k == KIND_TREE:
-			var is_near := d2 < tree_near * tree_near
-			_nodes[i].visible = is_near
 			var f = _far_nodes[i]
-			if f != null: f.visible = (not is_near) and d2 < tree_far * tree_far
+			var f2 = _far2_nodes[i]
+			var lod := 0 if d2 < tree_near * tree_near else (1 if d2 < tree_mid * tree_mid else (2 if d2 < tree_far * tree_far else 3))
+			if f == null: lod = 0 if lod < 3 else 3
+			_nodes[i].visible = lod == 0
+			if f != null: f.visible = lod == 1
+			if f2 != null: f2.visible = lod == 2
 		elif k == KIND_BUSH:
 			_nodes[i].visible = d2 < bush * bush
 		else:

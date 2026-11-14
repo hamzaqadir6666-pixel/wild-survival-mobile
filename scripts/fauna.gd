@@ -151,7 +151,7 @@ func threat_near(a: Prey) -> Vector3:
 func update(delta: float, cam: Camera3D) -> void:
 	frame += 1
 	var near := float(Cfg.v("anim_near"))
-	var mid := float(Cfg.v("view")) * 0.8
+	var mid := minf(float(Cfg.v("view")) * 0.6, 125.0)        # beyond this animals are not drawn at all
 	var dp := deer.position
 	var level := 0
 	nearest_hunter = null

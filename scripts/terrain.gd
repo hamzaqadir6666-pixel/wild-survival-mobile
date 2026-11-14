@@ -1,8 +1,9 @@
 class_name Terrain
 extends Node3D
-## Ground mesh in 8 x 8 chunks of 128 m. Heights and blend weights live in the vertices.
+## Ground mesh in 16 x 16 chunks of 64 m. Heights and blend weights live in the vertices.
 
-const CHUNK := 32          # cells per chunk side (32 * 4 m = 128 m)
+const CHUNK := 16          # cells per chunk side (16 * 4 m = 64 m): small chunks cull well
+const SIDE := 16           # chunks per map side
 var material: ShaderMaterial
 var built := 0
 
@@ -13,14 +14,14 @@ func setup() -> void:
 		material.set_shader_parameter("t_" + t, load("res://assets/textures/t_%s.png" % t))
 
 func total() -> int:
-	return 64
+	return SIDE * SIDE
 
 ## builds one chunk; call until it returns false (spread over frames by the loader)
 func build_next() -> bool:
-	if built >= 64: return false
-	_build(built % 8, built / 8)
+	if built >= SIDE * SIDE: return false
+	_build(built % SIDE, built / SIDE)
 	built += 1
-	return built < 64
+	return built < SIDE * SIDE
 
 func _build(cx: int, cz: int) -> void:
 	var n := CHUNK + 1

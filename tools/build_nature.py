@@ -80,6 +80,9 @@ if __name__ == '__main__':
         if t1:
             P, N, C, UV, I = bake(name, src, t1); write_glb(f'{OUT}/{name}_lod1.glb', P, N, C, UV, I, name + '_lod1')
             info[name]['lod1_tris'] = int(len(I)); sheet.append((name + '_lod1', P, I, C))
+            # lod2: far silhouette for trees beyond ~100 m
+            P, N, C, UV, I = bake(name, src, 44); write_glb(f'{OUT}/{name}_lod2.glb', P, N, C, UV, I, name + '_lod2')
+            info[name]['lod2_tris'] = int(len(I)); sheet.append((name + '_lod2', P, I, C))
         print(name, info[name])
     json.dump(info, open(f'{OUT}/nature.json', 'w'), indent=1)
     if '--sheet' in sys.argv:
@@ -88,4 +91,4 @@ if __name__ == '__main__':
         for k, (nm, P, I, C) in enumerate(sheet):
             tile = Image.fromarray(render(P, I, C[I[:, 0], :3], S)); ImageDraw.Draw(tile).text((3, 3), f'{nm} {len(I)}', fill=(255, 255, 255))
             im.paste(tile, ((k % cols) * S, (k // cols) * S))
-        im.save('.cache/nature_baked.png')
+        im.save('preview_tmp/nature_baked.png')

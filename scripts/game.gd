@@ -168,7 +168,7 @@ func _loading_step() -> void:
 				if not terrain.build_next():
 					_load_step = 3
 					break
-			load_bar.value = 5.0 + 30.0 * terrain.built / 64.0
+			load_bar.value = 5.0 + 30.0 * terrain.built / float(terrain.total())
 		3:
 			water = Water.new(); add_child(water); water.build()
 			sky = SkyRig.new(); add_child(sky); sky.setup()

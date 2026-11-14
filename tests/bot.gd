@@ -55,7 +55,9 @@ func secs(t: float) -> void:
 func _run() -> void:
 	while game.state == game.LOADING: await get_tree().process_frame
 	print("loaded: longest frame %.0f ms, vegetation instances %d, prey %d" % [game.longest_frame_ms, game.vegetation.instance_total, game.fauna.prey.size()])
-	if mode.begins_with("--soak"):
+	if mode.begins_with("--test-perf"):
+		await _perf()
+	elif mode.begins_with("--soak"):
 		var parts := mode.split("=")
 		await _soak(float(parts[1]) if parts.size() > 1 else 300.0)
 	else:
@@ -460,7 +462,7 @@ func _tests() -> void:
 	var far_hidden := true
 	var far_n := 0
 	for pr in g.fauna.predators:
-		if pr.dist_to(p.position) > float(Cfg.v("view")):
+		if pr.dist_to(p.position) > minf(float(Cfg.v("view")) * 0.6, 125.0) + 2.0:
 			far_n += 1
 			if pr.model.visible or pr.anim.active: far_hidden = false
 	check("level 8 spawns 48 hunters", g.fauna.predators.size() == 48)
@@ -685,3 +687,94 @@ func _soak(total: float) -> void:
 	if base_mem > 0.0:
 		check("soak: memory did not grow more than 10% after the first quarter", mem < base_mem * 1.10, "(%.1f -> %.1f MB)" % [base_mem / 1048576.0, mem / 1048576.0])
 	check("soak: runs were played", runs >= 1, "(%d runs)" % runs)
+
+
+## Scene budget estimate (no GPU needed): for many view points it counts what the
+## renderer would be asked to draw - every node that is switched on and touches the
+## camera frustum - and adds up draw calls and triangles.
+##   godot --headless --path . -- --test-perf
+func _perf() -> void:
+	var g := game
+	var info: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://assets/models/nature/nature.json"))
+	var veg: Vegetation = g.vegetation
+	var tris_of := {}
+	for name in veg.meshes: tris_of[veg.meshes[name]] = int(info[name].tris)
+	for name in veg.lod_meshes: tris_of[veg.lod_meshes[name]] = int(info[name].lod1_tris)
+	for name in veg.lod2_meshes: tris_of[veg.lod2_meshes[name]] = int(info[name].lod2_tris)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	for preset in 3:
+		Cfg.set_preset(preset)
+		g.start_level(7)            # the heaviest level: 48 hunters
+		await frames(3)
+		var worst_dc := 0
+		var worst_tris := 0
+		var worst_part := {}
+		var sum_dc := 0
+		var sum_tris := 0
+		var n := 0
+		for spot in 24:
+			var pt := World.random_dry_point(rng)
+			_place(pt.x, pt.y)
+			g.cam_yaw = rng.randf() * TAU
+			g.cam_pitch = 0.3
+			g.cam_target = g.player.position + Vector3(0, 1.25, 0)
+			await frames(2)
+			veg.update_visibility(g.camera.position, true)
+			g.grass._last = Vector3(1e9, 0, 1e9)
+			await frames(2)
+			var planes: Array[Plane] = g.camera.get_frustum()
+			var dc := 0
+			var tris := 0
+			var part := {}
+			# vegetation chunks (64 m)
+			for i in veg._nodes.size():
+				for node in [veg._nodes[i], veg._far_nodes[i], veg._far2_nodes[i]]:
+					if node == null or not node.visible: continue
+					if not _box_in(planes, Vector3(veg._cx[i], 12.0, veg._cz[i]), Vector3(32, 30, 32)): continue
+					dc += 1
+					var tt: int = node.multimesh.instance_count * int(tris_of.get(node.multimesh.mesh, 300))
+					tris += tt
+					var kk := "veg%d" % veg._kind[i] if node == veg._nodes[i] else "lod"
+					part[kk] = int(part.get(kk, 0)) + tt
+			# terrain chunks (128 m, 2048 triangles each) and water
+			for cz in 16:
+				for cx in 16:
+					var hc := World.height(cx * 64.0 + 32.0, cz * 64.0 + 32.0)
+					if _box_in(planes, Vector3(cx * 64.0 + 32.0, hc, cz * 64.0 + 32.0), Vector3(32, 30, 32)):
+						dc += 1; tris += 512
+			for cz in 4:
+				for cx in 4:
+					if _box_in(planes, Vector3(cx * 256.0 + 128.0, 0.0, cz * 256.0 + 128.0), Vector3(128, 1, 128)):
+						dc += 1; tris += g.water.triangles / 8
+			# animals
+			var animals: Array = g.fauna.predators + g.fauna.prey
+			for a in animals:
+				if a.tier == Animal.TIER_FAR: continue
+				if not _box_in(planes, a.position + Vector3(0, 0.6, 0), Vector3(1.2, 1.0, 1.2)): continue
+				dc += (4 if a.is_bird else 1) + (1 if a.blob != null and a.tier == Animal.TIER_NEAR else 0)
+				tris += 230 if a.is_bird else 2400
+			dc += 2; tris += 2100 + 2            # deer + its blob shadow
+			dc += 8; tris += 8 * 230             # sky birds (2 hawks at most in view)
+			dc += 1; tris += g.grass.multimesh.visible_instance_count * 64
+			dc += 4; tris += 400                 # sky dome, sun, moon, rain
+			for it in g.plants.items:
+				if it.node.visible and _box_in(planes, it.node.position, Vector3(1, 1, 1)):
+					dc += 2; tris += 150
+			dc += 6                              # HUD, minimap, touch controls (canvas batches)
+			part["grass"] = g.grass.multimesh.visible_instance_count * 64
+			if tris > worst_tris: worst_part = part
+			worst_dc = maxi(worst_dc, dc); worst_tris = maxi(worst_tris, tris)
+			sum_dc += dc; sum_tris += tris; n += 1
+		print("PERF %-6s  draw calls avg %d  max %d   triangles avg %dk  max %dk   (budget: 150 / 120k)" % [Cfg.PRESETS[preset].name, sum_dc / n, worst_dc, sum_tris / n / 1000, worst_tris / 1000])
+		print("     heaviest view, triangles by group: ", worst_part)
+		check("%s preset stays under 150 draw calls and 120k triangles at all sampled views" % Cfg.PRESETS[preset].name, worst_dc <= 150 and worst_tris <= 120000, "(max %d calls, %dk triangles)" % [worst_dc, worst_tris / 1000])
+		g.to_menu()
+	Cfg.set_preset(0)
+
+func _box_in(planes: Array[Plane], c: Vector3, e: Vector3) -> bool:
+	for pl in planes:
+		# Godot frustum planes point outward: a box is outside when it is fully in front of one
+		var r := e.x * absf(pl.normal.x) + e.y * absf(pl.normal.y) + e.z * absf(pl.normal.z)
+		if pl.distance_to(c) > r: return false
+	return true

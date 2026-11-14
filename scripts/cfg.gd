@@ -7,9 +7,9 @@ signal changed
 const VERSION := 1
 const PATH := "user://settings.json"
 const PRESETS := [
-	{"name": "Low", "shadows": false, "shadow_size": 0, "scale": 0.6, "grass": 0.25, "view": 170.0, "fps": 30, "wind": false, "rain": 110, "tree_near": 60.0, "bush": 55.0, "small": 34.0, "anim_near": 55.0},
-	{"name": "Medium", "shadows": true, "shadow_size": 1024, "scale": 0.8, "grass": 0.6, "view": 230.0, "fps": 60, "wind": true, "rain": 220, "tree_near": 80.0, "bush": 85.0, "small": 50.0, "anim_near": 80.0},
-	{"name": "High", "shadows": true, "shadow_size": 2048, "scale": 1.0, "grass": 1.0, "view": 290.0, "fps": 60, "wind": true, "rain": 340, "tree_near": 100.0, "bush": 110.0, "small": 65.0, "anim_near": 80.0},
+	{"name": "Low", "shadows": false, "shadow_size": 0, "scale": 0.6, "grass": 0.25, "view": 170.0, "fps": 30, "wind": false, "rain": 110, "tree_near": 20.0, "tree_mid": 75.0, "bush": 50.0, "small": 30.0, "anim_near": 55.0},
+	{"name": "Medium", "shadows": true, "shadow_size": 1024, "scale": 0.8, "grass": 0.6, "view": 230.0, "fps": 60, "wind": true, "rain": 220, "tree_near": 24.0, "tree_mid": 105.0, "bush": 70.0, "small": 42.0, "anim_near": 80.0},
+	{"name": "High", "shadows": true, "shadow_size": 2048, "scale": 1.0, "grass": 1.0, "view": 270.0, "fps": 60, "wind": true, "rain": 340, "tree_near": 26.0, "tree_mid": 92.0, "bush": 70.0, "small": 42.0, "anim_near": 80.0},
 ]
 const OVERRIDABLE := ["shadows", "scale", "grass", "view", "fps"]
 
