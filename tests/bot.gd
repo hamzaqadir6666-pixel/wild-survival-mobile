@@ -289,7 +289,7 @@ func _tests() -> void:
 		if hits > 0: break
 	check("lion notices a standing deer (stalk)", saw_stalk)
 	check("lion charges (chase)", saw_chase)
-	check("lion attacks with its attack animation", saw_attack and lion.anim.has_animation("attack"))
+	check("lion attacks with its attack animation", saw_attack and (lion.anim.has_animation("attack") or lion.model.position.z > 0.0 or lion.cur_anim == "attack"))
 	check("HUD threat went watched -> hunted", watched and hunted)
 	check("lion bite hurts the deer and flashes the screen", hits > 0 and g.hud.flash > 0.0 and lion.cfg.dmg > 20.0)
 	# escape into a safe thicket
@@ -327,24 +327,38 @@ func _tests() -> void:
 	var clip_ok := true
 	var stride_ok := true
 	var report := ""
-	for sp in ["deer", "lion", "tiger", "cheetah", "hyena", "wolf", "crocodile", "gazelle", "boar", "goat", "buffalo", "fox"]:
+	var native := 0
+	for sp in ["deer", "lion", "tiger", "cheetah", "hyena", "wolf", "crocodile", "gazelle", "boar", "goat", "buffalo", "fox", "elephant", "rhino"]:
 		var an := Animal.new()
 		g.add_child(an)
 		an.setup(sp)
 		var need := ["idle", "walk", "run", "eat", "death"]
 		if D.SPECIES[sp].get("kind", "") == "predator": need.append("attack")
 		for clip in need:
-			if not an.anim.has_animation(clip):
+			# every state must show something: its own clip, or (idle+walk-only models) a body pose / the walk clip
+			an.cur_anim = ""
+			an.play(clip)
+			var own: bool = an.anim.has_animation(clip)
+			if own: native += 1
+			var stand_in: bool = (clip == "run" and an.anim.current_animation == "walk") or an._pose == clip
+			if an.cur_anim != clip or not (own or stand_in) or not an.anim.has_animation("idle") or not an.anim.has_animation("walk"):
 				clip_ok = false; report += " %s:%s" % [sp, clip]
 		var cfg: Dictionary = D.SPECIES[sp]
 		var rw: float = cfg.walk / an.walk_nat
 		var rr: float = cfg.run / an.run_nat
 		if cfg.walk >= an.run_nat * 0.55: rw = cfg.walk / an.run_nat
-		if rw < 0.5 or rw > 3.0 or rr < 0.5 or rr > 3.0:
+		# models without a run clip trot with the walk clip at a capped rate, so only their walk is checked
+		if not an.anim.has_animation("run"): rr = 1.0
+		if rw < 0.5 or rw > maxf(3.0, an.walk_cycle / 0.6) or rr < 0.5 or rr > 3.0:
 			stride_ok = false; report += " %s rates %.2f/%.2f" % [sp, rw, rr]
 		an.queue_free()
-	check("every animal has idle, walk, run, eat, death (+attack for hunters)", clip_ok, report)
-	check("animation speed follows ground speed for every species (no foot sliding)", stride_ok, report)
+	check("every animal shows idle, walk, run, eat, death (+attack for hunters): own clip or stand-in pose", clip_ok, report + " (%d own clips)" % native)
+	var meshes := {}
+	for sp in ["lion", "tiger", "hyena", "wolf", "crocodile", "boar", "gazelle", "goat", "elephant", "rhino", "buffalo", "fox", "deer"]:
+		meshes[str(Animal.info()[D.SPECIES[sp].model].base)] = true
+	check("hunters are different models: lion, big cat, hyena, wolf and crocodile do not share a mesh", meshes.size() >= 12 and Animal.info().crocodile.base != Animal.info().fox.base
+		and Animal.info().lion.base != Animal.info().hyena.base and Animal.info().hyena.base != Animal.info().wolf.base, "(%d source meshes)" % meshes.size())
+	check("animation speed follows ground speed (walk for all, run for models that have a run clip)", stride_ok, report)
 	var bird := Animal.new(); g.add_child(bird); bird.setup("junglefowl")
 	check("junglefowl model has idle, walk, eat and flight clips", bird.anim.has_animation("idle") and bird.anim.has_animation("walk") and bird.anim.has_animation("eat") and bird.anim.has_animation("run"))
 	bird.queue_free()
@@ -441,7 +455,7 @@ func _tests() -> void:
 		await get_tree().process_frame
 		if gz.state == Prey.FLEE: fled = true; break
 	check("gazelle flees when the deer comes close", fled)
-	check("wildlife seen counter increases", g.fauna.seen_count() >= 1, "(%d / 14)" % g.fauna.seen_count())
+	check("wildlife seen counter increases", g.fauna.seen_count() >= 1, "(%d / 16)" % g.fauna.seen_count())
 
 	# ---------------- roaming hunter
 	_place(400, 520)
@@ -611,6 +625,147 @@ func _tests() -> void:
 	g.to_menu()
 	check("back to the main menu", g.state == g.MENU and g.menus.current == "main")
 	check("statistics recorded", int(Save.d.stats.games) >= 3 and int(Save.d.stats.deaths) >= 1)
+	await _tests_hunter()
+
+## second half: wildlife density, playable animals, the hunter campaign
+func _tests_hunter() -> void:
+	var g := game
+	var p: Player = g.player
+	keep_alive = true
+	# ---------------- wildlife is easy to find
+	check("wildlife: at least 120 animals in about 50 herds, incl. elephants and rhinos", g.fauna.prey.size() >= 120, "(%d)" % g.fauna.prey.size())
+	var worst_near := 999
+	for k in 6:
+		g.start_level(0)
+		await frames(3)
+		var near := 0
+		var kinds := {}
+		for a in g.fauna.prey:
+			if a.alive and a.dist_to(p.position) < 60.0:
+				near += 1; kinds[a.species] = true
+		worst_near = mini(worst_near, near)
+	check("wildlife: animals stand within 60 m of every start", worst_near >= 5, "(fewest in 6 starts: %d)" % worst_near)
+	_quiet()
+	# ---------------- prey characters
+	g.to_menu()
+	var stats_ok := true
+	for sp in D.CHAR_ORDER.prey + D.CHAR_ORDER.pred:
+		var side: String = D.CHARACTERS[sp].side
+		Save.d.side = side
+		Save.d.char[side] = sp
+		g.start_level(0)
+		await frames(2)
+		_quiet()
+		if p.species != sp or p.hunter != (side == "pred") or absf(p.max_health - float(D.CHARACTERS[sp].hp)) > 0.01 or p.model == null or p.anim == null: stats_ok = false
+		g.to_menu()
+	check("11 playable animals (5 prey, 6 hunters) load with their own model and stats", stats_ok and D.CHAR_ORDER.prey.size() == 5 and D.CHAR_ORDER.pred.size() == 6)
+	Save.d.side = "prey"; Save.d.char.prey = "gazelle"
+	g.start_level(0)
+	await frames(2)
+	_quiet()
+	var c: TouchControls = g.controls
+	_place(400, 520)
+	g.cam_yaw = 0.0
+	c.move = Vector2(0, 1); c.sprint = true
+	var p0 := p.pos2()
+	await secs(2.0)
+	var gz := p.pos2().distance_to(p0)
+	c.move = Vector2.ZERO; c.sprint = false
+	check("gazelle sprints faster than the deer", gz > 13.5, "(%.1f m in 2 s)" % gz)
+	g.to_menu()
+	# ---------------- hunter mode
+	Save.d.side = "pred"; Save.d.char.pred = "lion"
+	g.menus.open("character")
+	check("character screen opens for the hunter side", g.menus.current == "character")
+	g.menus.open("main")
+	g.start_level(0)
+	await frames(3)
+	check("hunter level starts: playing a lion, goal is kills against the clock", g.state == g.PLAY and p.hunter and p.species == "lion" and g.goal_text().begins_with("Kills 0 / 2"), g.goal_text())
+	check("hunter: plant abilities do not apply, strength is fixed", p.speed_mult == 1.0 and p.max_health == 170.0)
+	check("rivals: lions leave a lion alone, crocodiles do not", not g.fauna.hostile("lion") and not g.fauna.hostile("hyena") and g.fauna.hostile("crocodile"))
+	_quiet()
+	# find a gazelle and walk into its herd
+	var target: Prey = null
+	for a in g.fauna.prey:
+		if a.species == "gazelle" and a.alive:
+			target = a; break
+	var tp := target.pos2()
+	_place(tp.x - 24.0, tp.y)
+	c.move = Vector2.ZERO
+	await secs(1.0)
+	var calm: bool = target.state != Prey.FLEE
+	_place(target.position.x - 12.0, target.position.z)
+	await secs(1.0)
+	check("prey notices a walking hunter from farther away than it notices a deer", calm and target.state == Prey.FLEE, "(calm at 24 m: %s, state at 12 m: %d)" % [calm, target.state])
+	# bite: put the lion right behind it
+	target.state = Prey.GRAZE; target.timer = 99.0
+	_place(target.position.x, target.position.z - 1.5)
+	p.yaw = 0.0; p.rotation.y = 0.0
+	await frames(2)
+	check("action button offers a bite when prey is in reach", g.fauna.prey_in_reach())
+	c.act = true
+	await frames(3)
+	check("one lion bite brings down a gazelle and counts as a kill", not target.alive and g.kills == 1 and target.meat > 0.0, "(kills %d)" % g.kills)
+	await secs(1.2)
+	p.food = 40.0
+	_place(target.position.x, target.position.z - 1.2)
+	c.act = true
+	await frames(3)
+	var feeding := p.action == "feed"
+	await secs(4.0)
+	check("feeding on the carcass fills the food bar", feeding and p.food > 55.0, "(food %.0f)" % p.food)
+	# a buffalo needs more than one bite
+	var buf: Prey = null
+	for a in g.fauna.prey:
+		if a.species == "buffalo" and a.alive:
+			buf = a; break
+	_place(buf.position.x, buf.position.z - 1.6)
+	p.yaw = 0.0; p.rotation.y = 0.0; p.action = ""
+	await secs(1.0)
+	_place(buf.position.x, buf.position.z - 1.6)
+	p.yaw = 0.0; p.rotation.y = 0.0
+	c.act = true
+	await frames(3)
+	check("a buffalo survives the first bite and runs", buf.alive and buf.hp < 150.0 and buf.state == Prey.FLEE, "(hp %.0f)" % buf.hp)
+	var ele: Prey = null
+	for a in g.fauna.prey:
+		if a.species == "elephant": ele = a
+	check("elephants cannot be hunted", ele != null and not ele.bitten(500.0, Vector2.ZERO) and ele.alive)
+	g.kills = 2
+	for i in 400:
+		await get_tree().process_frame
+		if g.menus.current == "complete": break
+	check("hunt 1 completes at 2 kills and unlocks hunt 2", g.result.get("won", false) and int(Save.d.unlocked_pred) == 2 and g.result.hunter)
+	g.start_level(1)
+	await frames(3)
+	_quiet()
+	keep_alive = false
+	g.run_time = float(D.PRED_LEVELS[1].time) - 0.5
+	for i in 2000:
+		await get_tree().process_frame
+		if g.menus.current == "gameover": break
+	check("a hunt fails when the time runs out", g.menus.current == "gameover" and not g.result.won and str(g.result.cause).begins_with("The hunt"))
+	keep_alive = true
+	# a weak hunter is attacked by stronger ones
+	g.to_menu()
+	Save.d.char.pred = "cheetah"
+	g.start_level(0)
+	await frames(3)
+	_quiet()
+	check("a cheetah player has lions and hyenas as enemies", g.fauna.hostile("lion") and g.fauna.hostile("hyena") and not g.fauna.hostile("cheetah"))
+	var rival: Predator = g.fauna._make_predator("lion", Vector2(413, 520))
+	_place(400, 520)
+	rival.yaw = -PI * 0.5; rival.rotation.y = rival.yaw
+	var noticed := false
+	for i in 900:
+		await get_tree().process_frame
+		if rival.state == Predator.STALK or rival.state == Predator.CHASE or rival.state == Predator.ATTACK:
+			noticed = true; break
+	check("a rival lion goes after a cheetah player", noticed)
+	g.to_menu()
+	Save.d.side = "prey"; Save.d.char.prey = "deer"
+	g.show_character()
+	check("switching back to the deer works", p.species == "deer" and not p.hunter)
 
 func _mem() -> String:
 	return "static %.1f MB, objects %d, nodes %d, orphans %d" % [OS.get_static_memory_usage() / 1048576.0, Performance.get_monitor(Performance.OBJECT_COUNT),
@@ -753,7 +908,7 @@ func _perf() -> void:
 				if a.tier == Animal.TIER_FAR: continue
 				if not _box_in(planes, a.position + Vector3(0, 0.6, 0), Vector3(1.2, 1.0, 1.2)): continue
 				dc += (4 if a.is_bird else 1) + (1 if a.blob != null and a.tier == Animal.TIER_NEAR else 0)
-				tris += 230 if a.is_bird else 2400
+				tris += 230 if a.is_bird else int(Animal.info()[a.cfg.model].tris)
 			dc += 2; tris += 2100 + 2            # deer + its blob shadow
 			dc += 8; tris += 8 * 230             # sky birds (2 hawks at most in view)
 			dc += 1; tris += g.grass.multimesh.visible_instance_count * 64

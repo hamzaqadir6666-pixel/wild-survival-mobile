@@ -5,3 +5,4 @@
 *.translation
 preview_tmp/
 .cache/
+__pycache__/

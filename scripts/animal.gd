@@ -38,6 +38,19 @@ var is_bird := false
 var hidden := false      # inside a safe thicket (deer only)
 var sneaking := false
 var noise := 0.0         # how far the animal can be heard, metres
+var lie_y := 0.2
+var _rate_cap := 1e9      # stand-in run: never faster than a quick trot
+var walk_cycle := 1.0
+var _rate_k := 1.0       # clip substitution: "run" played with the walk clip
+var _pose := ""          # body pose that stands in for a missing clip
+var _pose_tween: Tween
+
+## removes the model so another species can be set up on the same node
+func clear_model() -> void:
+	_set_pose("")
+	if model: model.queue_free()
+	if blob: blob.queue_free()
+	model = null; blob = null; anim = null; mesh_inst = null; cur_anim = ""
 
 static func info() -> Dictionary:
 	if _info.is_empty():
@@ -52,7 +65,11 @@ func setup(sp: String) -> void:
 		_setup_bird()
 	else:
 		var scene: PackedScene = load("res://assets/models/animals/%s.glb" % cfg.model)
-		model = scene.instantiate()
+		var inf: Dictionary = info()[cfg.model]
+		var inner: Node3D = scene.instantiate()
+		if inf.get("flip", false): inner.rotation.y = PI          # these source models look down -Z
+		model = Node3D.new()
+		model.add_child(inner)
 		var sc: float = cfg.scale
 		var shape: Vector3 = cfg.get("shape", Vector3(cfg.get("wide", 1.0), 1.0, 1.0))
 		model.scale = Vector3(sc, sc, sc) * shape
@@ -63,11 +80,12 @@ func setup(sp: String) -> void:
 			mesh_inst = mis[0]
 			mesh_inst.material_override = _material(sp)
 			mesh_inst.extra_cull_margin = 1.0
-		var inf: Dictionary = info()[cfg.model]
 		walk_nat = float(inf.walk_ref) * sc
 		run_nat = float(inf.run_ref) * sc
 		body = float(inf.length) * sc * 0.28
 		swim_depth = float(inf.height) * sc * shape.y * 0.55
+		lie_y = float(inf.length) * sc * 0.06
+		walk_cycle = float(inf.get("walk_cycle", 1.0))
 		if anim and not _looped.has(cfg.model):
 			_looped[cfg.model] = true
 			for a in ["idle", "idle2", "walk", "run", "eat"]:
@@ -79,7 +97,13 @@ func setup(sp: String) -> void:
 func _material(sp: String) -> ShaderMaterial:
 	if _mats.has(sp): return _mats[sp]
 	var m := ShaderMaterial.new()
-	m.shader = load("res://shaders/fur.gdshader")
+	if cfg.has("tex"):
+		m.shader = load("res://shaders/coat.gdshader")
+		m.set_shader_parameter("tex", load("res://assets/models/animals/tex_%s.png" % cfg.tex))
+		var tn: Color = cfg.get("tint", Color(1, 1, 1))
+		m.set_shader_parameter("tint", Vector3(tn.r, tn.g, tn.b))
+	else:
+		m.shader = load("res://shaders/fur.gdshader")
 	m.set_shader_parameter("fur", load("res://assets/textures/fur_%s.png" % cfg.fur))
 	m.set_shader_parameter("pattern_color", cfg.pat)
 	m.set_shader_parameter("pattern", cfg.pat_k)
@@ -179,12 +203,61 @@ func apply_quality() -> void:
 func play(a: String, rate := 1.0) -> void:
 	if anim == null: return
 	if cur_anim != a:
-		if not anim.has_animation(a):
-			if a == "death": anim.pause()
-			return
-		cur_anim = a
-		anim.play(a)
-	anim.speed_scale = rate
+		if is_bird:
+			if not anim.has_animation(a):
+				if a == "death": anim.pause()
+				return
+			cur_anim = a
+			anim.play(a)
+		else:
+			# models with only idle + walk: the missing clips become a body pose over idle / walk
+			cur_anim = a
+			_rate_k = 1.0
+			_rate_cap = 1e9
+			if anim.has_animation(a):
+				_set_pose("")
+				anim.play(a)
+			else:
+				match a:
+					"run":
+						_set_pose("")
+						_rate_k = run_nat / maxf(walk_nat, 0.01)
+						_rate_cap = maxf(walk_cycle / 0.3, 1.6)
+						anim.play("walk")
+					"jump":
+						_set_pose("")
+						anim.play("walk")
+					"death":
+						_set_pose("death")
+						anim.pause()
+					_:
+						_set_pose(a if a == "eat" or a == "attack" else "")
+						anim.play("idle")
+	anim.speed_scale = minf(rate * _rate_k, _rate_cap)
+
+func _set_pose(p: String) -> void:
+	if p == _pose or model == null: return
+	_pose = p
+	if _pose_tween: _pose_tween.kill()
+	_pose_tween = null
+	match p:
+		"":
+			model.rotation = Vector3.ZERO
+			model.position = Vector3.ZERO
+		"eat":
+			model.position = Vector3.ZERO
+			model.rotation = Vector3(0.2, 0, 0)
+		"death":
+			_pose_tween = create_tween().set_parallel(true)
+			_pose_tween.tween_property(model, "rotation", Vector3(0, 0, 1.5), 0.35)
+			_pose_tween.tween_property(model, "position", Vector3(0, lie_y, 0), 0.35)
+		"attack":
+			model.rotation = Vector3(-0.16, 0, 0)
+			_pose_tween = create_tween()
+			_pose_tween.tween_property(model, "position", Vector3(0, 0, body * 1.6), 0.14)
+			_pose_tween.parallel().tween_property(model, "rotation", Vector3(0.2, 0, 0), 0.14)
+			_pose_tween.tween_property(model, "position", Vector3.ZERO, 0.3)
+			_pose_tween.parallel().tween_property(model, "rotation", Vector3.ZERO, 0.3)
 
 ## picks idle / walk / run and plays it at the rate that matches the ground speed
 func locomotion(spd: float) -> void:
@@ -193,7 +266,7 @@ func locomotion(spd: float) -> void:
 	elif is_bird and spd >= run_nat * 0.55:
 		cur_anim = "run"
 		Animal.bird_fly(anim)
-	elif spd < run_nat * 0.55: play("walk", clampf(spd / walk_nat, 0.5, 3.0))
+	elif spd < run_nat * 0.55: play("walk", clampf(spd / walk_nat, 0.5, maxf(3.0, walk_cycle / 0.6)))
 	else: play("run", clampf(spd / run_nat, 0.5, 3.0))
 
 func set_tier(t: int) -> void:

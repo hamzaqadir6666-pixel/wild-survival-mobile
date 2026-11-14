@@ -147,7 +147,7 @@ def main():
     c = r.uniform(60, 964, (60000, 2)); sc = S.at('s', c[:, 0], c[:, 1]); ok = (sc > -1.5) & (sc < 1.0) & (S.at('d4', c[:, 0], c[:, 1]) < 420)
     crocs = spaced(c[ok], 70, 14)
     c = r.uniform(90, 934, (4000, 2)); ok = (S.at('s', c[:, 0], c[:, 1]) > 12) & (S.at('d4', c[:, 0], c[:, 1]) < 410)
-    herds = [(float(x), float(z)) for (_, x, z, _) in CLEARINGS] + spaced(c[ok], 90, 12, [(x, z) for (_, x, z, _) in CLEARINGS])
+    herds = [(float(x), float(z)) for (_, x, z, _) in CLEARINGS] + spaced(c[ok], 52, 44, [(x, z) for (_, x, z, _) in CLEARINGS])
     assert len(dens) >= 52 and len(crocs) >= 12 and len(herds) >= 18, (len(dens), len(crocs), len(herds))
     # ---- vegetation instances
     inst = []  # (type, x, z, scale, rot)
@@ -165,18 +165,18 @@ def main():
         return block_types[b][0 if u < 0.6 else 1]
     x, z, u = grid(10.5)
     sv = S.at('s', x, z); mv = S.at('m', x, z); gv = S.at('grass', x, z); tv = S.at('trail', x, z)
-    ok = (sv > 5) & (mv < 0.62) & (tv > 3.5) & clear_of(x, z, sp, 13) & clear_of(x, z, pl, 3.0) & (u < np.where(gv > 0.4, 0.02, 0.84) * np.where(mv > 0.2, 0.55, 1))
+    ok = (sv > 5) & (mv < 0.62) & (tv > 3.5) & clear_of(x, z, sp, 13) & clear_of(x, z, pl, 3.0) & (u < np.where(gv > 0.4, 0.015, 0.40) * np.where(mv > 0.2, 0.55, 1))
     u2 = r.uniform(0, 1, x.size)
     for k in np.where(ok)[0]:
-        if 5 < sv[k] < 24 and u2[k] < 0.55: add('palm_a' if (int(x[k] // 128) + int(z[k] // 128)) % 2 == 0 else 'palm_b', x[k], z[k], r.uniform(2.8, 3.8))
+        if 5 < sv[k] < 24 and u2[k] < 0.55: add('palm_a' if (int(x[k] // 128) + int(z[k] // 128)) % 2 == 0 else 'palm_b', x[k], z[k], r.uniform(2.0, 2.8))
         else:
-            t = tree_type(x[k], z[k], u2[k]); add(t, x[k], z[k], r.uniform(5.2, 6.6) if t == 'tree_big' else r.uniform(4.0, 5.6))
+            t = tree_type(x[k], z[k], u2[k]); add(t, x[k], z[k], r.uniform(3.2, 4.0) if t == 'tree_big' else r.uniform(2.3, 3.3))
     for (kind, _, lx, lz) in LANDMARKS:
-        if kind == 'giant_tree': add('tree_giant', lx, lz, 9.0)
+        if kind == 'giant_tree': add('tree_giant', lx, lz, 7.0)
         if kind == 'berry_glade':
             for a in range(10): ang = a * 0.628 + r.uniform(0, 0.3); d = r.uniform(4, 10); add('bush_berry', lx + np.cos(ang) * d, lz + np.sin(ang) * d, r.uniform(1.3, 1.9))
         if kind == 'banana_grove':
-            for a in range(14): ang = a * 0.449; d = r.uniform(3, 12); add('banana', lx + np.cos(ang) * d, lz + np.sin(ang) * d, r.uniform(5.0, 6.8))
+            for a in range(14): ang = a * 0.449; d = r.uniform(3, 12); add('banana', lx + np.cos(ang) * d, lz + np.sin(ang) * d, r.uniform(3.4, 4.4))
     for (tx, tz) in THICKETS:  # a dense ring of bushes marks every safe thicket
         for a in range(16): ang = a * 0.3927 + r.uniform(-0.1, 0.1); add('bush_a', tx + np.cos(ang) * (THICKET_R - 0.5), tz + np.sin(ang) * (THICKET_R - 0.5), r.uniform(2.0, 2.6))
         for a in range(9): ang = r.uniform(0, 6.28); d = r.uniform(2, 8); add('fern_a', tx + np.cos(ang) * d, tz + np.sin(ang) * d, r.uniform(1.6, 2.2))
@@ -188,7 +188,7 @@ def main():
     for k in np.where((sv > 3) & (mv < 0.2) & (tv > 2.5) & (gv < 0.6) & (u < 0.5) & clear_of(x, z, pl, 2.0))[0]:
         add(chunk_pick(x[k], z[k], 'fern_a', 'fern_b'), x[k], z[k], r.uniform(1.3, 2.0))
     x, z, u = grid(12.0); sv = S.at('s', x, z); mv = S.at('m', x, z); tv = S.at('trail', x, z)
-    for k in np.where((sv > 7) & (sv < 30) & (mv < 0.05) & (tv > 3) & (u < 0.28))[0]: add('banana', x[k], z[k], r.uniform(4.6, 6.4))
+    for k in np.where((sv > 7) & (sv < 30) & (mv < 0.05) & (tv > 3) & (u < 0.16))[0]: add('banana', x[k], z[k], r.uniform(3.2, 4.2))
     x, z, u = grid(5.0); sv = S.at('s', x, z); gv = S.at('grass', x, z); tv = S.at('trail', x, z)
     for k in np.where((sv > 5) & (gv > 0.55) & (tv > 3) & (u < 0.5))[0]: add('tall_grass', x[k], z[k], r.uniform(0.9, 1.5))
     x, z, u = grid(14.0); sv = S.at('s', x, z); mv = S.at('m', x, z); sl = S.at('slope', x, z); tv = S.at('trail', x, z)

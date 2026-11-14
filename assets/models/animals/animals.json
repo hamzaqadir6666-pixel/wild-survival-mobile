@@ -18,101 +18,6 @@
    "walk"
   ]
  },
- "gazelle": {
-  "base": "Deer",
-  "tris": 2098,
-  "height": 4.274,
-  "length": 4.397,
-  "walk_ref": 2.286,
-  "run_ref": 12.638,
-  "clips": [
-   "attack",
-   "death",
-   "eat",
-   "hit",
-   "idle",
-   "idle2",
-   "jump",
-   "run",
-   "walk"
-  ]
- },
- "lion": {
-  "base": "Husky",
-  "tris": 1920,
-  "height": 3.191,
-  "length": 3.889,
-  "walk_ref": 2.159,
-  "run_ref": 7.611,
-  "clips": [
-   "attack",
-   "death",
-   "eat",
-   "hit",
-   "idle",
-   "idle2",
-   "jump",
-   "run",
-   "walk"
-  ]
- },
- "hyena": {
-  "base": "Husky",
-  "tris": 1920,
-  "height": 3.191,
-  "length": 3.889,
-  "walk_ref": 2.159,
-  "run_ref": 7.611,
-  "clips": [
-   "attack",
-   "death",
-   "eat",
-   "hit",
-   "idle",
-   "idle2",
-   "jump",
-   "run",
-   "walk"
-  ]
- },
- "tiger": {
-  "base": "Wolf",
-  "tris": 1962,
-  "height": 2.681,
-  "length": 5.553,
-  "walk_ref": 2.159,
-  "run_ref": 9.836,
-  "clips": [
-   "attack",
-   "death",
-   "eat",
-   "hit",
-   "idle",
-   "idle2",
-   "jump",
-   "run",
-   "walk"
-  ]
- },
- "cheetah": {
-  "base": "Wolf",
-  "tris": 1962,
-  "height": 2.681,
-  "length": 5.553,
-  "walk_ref": 2.159,
-  "run_ref": 9.836,
-  "clips": [
-   "attack",
-   "death",
-   "eat",
-   "hit",
-   "idle",
-   "idle2",
-   "jump",
-   "run",
-   "walk"
-  ]
- },
  "wolf": {
   "base": "Wolf",
   "tris": 1962,
@@ -151,25 +56,6 @@
    "walk"
   ]
  },
- "crocodile": {
-  "base": "Fox",
-  "tris": 1848,
-  "height": 2.677,
-  "length": 5.883,
-  "walk_ref": 2.159,
-  "run_ref": 9.836,
-  "clips": [
-   "attack",
-   "death",
-   "eat",
-   "hit",
-   "idle",
-   "idle2",
-   "jump",
-   "run",
-   "walk"
-  ]
- },
  "buffalo": {
   "base": "Bull",
   "tris": 2418,
@@ -189,40 +75,164 @@
    "walk"
   ]
  },
- "boar": {
-  "base": "Bull",
-  "tris": 2418,
-  "height": 4.587,
-  "length": 8.067,
-  "walk_ref": 2.294,
-  "run_ref": 11.234,
+ "lion": {
+  "base": "zeroad_fauna/lion.glb",
+  "tex": "lion",
+  "flip": true,
+  "tris": 820,
+  "height": 3.255,
+  "length": 6.819,
+  "walk_ref": 0.818,
+  "walk_cycle": 3.267,
+  "run_ref": 2.128,
   "clips": [
-   "attack",
-   "death",
-   "eat",
-   "hit",
    "idle",
-   "idle2",
-   "jump",
-   "run",
+   "walk"
+  ]
+ },
+ "tiger": {
+  "base": "zeroad_fauna/lioness.glb",
+  "tex": "lioness",
+  "flip": true,
+  "tris": 980,
+  "height": 3.236,
+  "length": 7.115,
+  "walk_ref": 0.854,
+  "walk_cycle": 3.267,
+  "run_ref": 2.22,
+  "clips": [
+   "idle",
+   "walk"
+  ]
+ },
+ "cheetah": {
+  "base": "zeroad_fauna/lioness.glb",
+  "tex": "lioness",
+  "flip": true,
+  "tris": 980,
+  "height": 3.236,
+  "length": 7.115,
+  "walk_ref": 0.854,
+  "walk_cycle": 3.267,
+  "run_ref": 2.22,
+  "clips": [
+   "idle",
+   "walk"
+  ]
+ },
+ "crocodile": {
+  "base": "zeroad_fauna/crocodile.glb",
+  "tex": "crocodile",
+  "flip": true,
+  "tris": 700,
+  "height": 2.07,
+  "length": 12.148,
+  "walk_ref": 2.216,
+  "walk_cycle": 1.083,
+  "run_ref": 5.763,
+  "clips": [
+   "idle",
+   "walk"
+  ]
+ },
+ "boar": {
+  "base": "zeroad_fauna/boar.glb",
+  "tex": "boar",
+  "flip": true,
+  "tris": 362,
+  "height": 1.986,
+  "length": 3.639,
+  "walk_ref": 3.275,
+  "walk_cycle": 0.3,
+  "run_ref": 8.514,
+  "clips": [
+   "idle",
+   "walk"
+  ]
+ },
+ "gazelle": {
+  "base": "zeroad_fauna/gazelle.glb",
+  "tex": "gazelle",
+  "flip": true,
+  "tris": 306,
+  "height": 3.704,
+  "length": 4.358,
+  "walk_ref": 1.864,
+  "walk_cycle": 0.967,
+  "run_ref": 4.846,
+  "clips": [
+   "idle",
    "walk"
   ]
  },
  "goat": {
-  "base": "Cow",
-  "tris": 2450,
-  "height": 4.587,
-  "length": 8.067,
-  "walk_ref": 2.294,
-  "run_ref": 11.234,
+  "base": "zeroad_fauna/goat.glb",
+  "tex": "goat",
+  "flip": true,
+  "tris": 366,
+  "height": 2.661,
+  "length": 3.841,
+  "walk_ref": 0.967,
+  "walk_cycle": 1.6,
+  "run_ref": 2.515,
+  "clips": [
+   "idle",
+   "walk"
+  ]
+ },
+ "hyena": {
+  "base": "poly_google/Hyena.glb",
+  "tex": "hyena",
+  "flip": false,
+  "tris": 868,
+  "height": 4.371,
+  "length": 5.553,
+  "walk_ref": 2.684,
+  "walk_cycle": 1.042,
+  "run_ref": 13.816,
   "clips": [
    "attack",
    "death",
-   "eat",
    "hit",
    "idle",
-   "idle2",
-   "jump",
+   "run",
+   "walk"
+  ]
+ },
+ "elephant": {
+  "base": "poly_google/Elephant.glb",
+  "tex": "elephant",
+  "flip": false,
+  "tris": 934,
+  "height": 6.518,
+  "length": 8.067,
+  "walk_ref": 2.957,
+  "walk_cycle": 1.167,
+  "run_ref": 16.083,
+  "clips": [
+   "attack",
+   "death",
+   "hit",
+   "idle",
+   "run",
+   "walk"
+  ]
+ },
+ "rhino": {
+  "base": "poly_google/Rhinoceros.glb",
+  "tex": "rhino",
+  "flip": false,
+  "tris": 742,
+  "height": 3.809,
+  "length": 8.067,
+  "walk_ref": 2.957,
+  "walk_cycle": 1.167,
+  "run_ref": 15.123,
+  "clips": [
+   "attack",
+   "death",
+   "hit",
+   "idle",
    "run",
    "walk"
   ]

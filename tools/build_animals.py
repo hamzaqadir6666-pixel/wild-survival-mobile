@@ -3,7 +3,9 @@
 light .glb per game species: all primitives merged into ONE surface (one draw
 call per animal), species colours stored as vertex colours, side-projected UVs
 for the fur-pattern texture, and only the animation clips the game uses.
-Run:  python3 tools/build_animals.py
+Only deer, wolf, fox and buffalo come from this pack now; every other animal is baked by
+build_animals2.py, which must run AFTER this script (it adds its entries to animals.json).
+Run:  python3 tools/build_animals.py && python3 tools/build_animals2.py
 """
 import json, base64, struct, os, sys
 import numpy as np
@@ -30,17 +32,9 @@ ROLES = {
 E0 = {'eye': (0.05, 0.05, 0.05), 'eyew': (0.9, 0.9, 0.85)}
 SPECIES = {
     'deer':      ('Deer', {'main': (0.60, 0.40, 0.24), 'light': (0.86, 0.78, 0.64), 'shade': (0.42, 0.28, 0.18), 'dark': (0.16, 0.13, 0.12)}),
-    'gazelle':   ('Deer', {'main': (0.80, 0.60, 0.36), 'light': (0.96, 0.93, 0.86), 'shade': (0.25, 0.17, 0.12), 'dark': (0.12, 0.10, 0.09)}),
-    'lion':      ('Husky', {'main': (0.78, 0.62, 0.38), 'light': (0.90, 0.80, 0.60), 'dark': (0.30, 0.20, 0.14)}),
-    'hyena':     ('Husky', {'main': (0.62, 0.54, 0.42), 'light': (0.74, 0.68, 0.56), 'dark': (0.14, 0.12, 0.11)}),
-    'tiger':     ('Wolf', {'main': (0.90, 0.50, 0.14), 'light': (0.97, 0.93, 0.84), 'dark': (0.20, 0.12, 0.10)}),
-    'cheetah':   ('Wolf', {'main': (0.88, 0.70, 0.40), 'light': (0.96, 0.90, 0.76), 'dark': (0.12, 0.10, 0.09)}),
     'wolf':      ('Wolf', {'main': (0.45, 0.45, 0.44), 'light': (0.72, 0.72, 0.69), 'dark': (0.10, 0.10, 0.10)}),
     'fox':       ('Fox', {'main': (0.80, 0.42, 0.16), 'light': (0.93, 0.91, 0.86), 'shade': (0.30, 0.28, 0.27), 'dark': (0.12, 0.11, 0.10)}),
-    'crocodile': ('Fox', {'main': (0.26, 0.33, 0.20), 'light': (0.62, 0.62, 0.44), 'shade': (0.20, 0.26, 0.16), 'dark': (0.16, 0.20, 0.13)}),
     'buffalo':   ('Bull', {'main': (0.17, 0.15, 0.14), 'light': (0.26, 0.23, 0.21), 'shade': (0.12, 0.11, 0.10), 'dark': (0.10, 0.09, 0.08), 'horn': (0.55, 0.52, 0.45)}),
-    'boar':      ('Bull', {'main': (0.30, 0.23, 0.18), 'light': (0.40, 0.32, 0.25), 'shade': (0.45, 0.33, 0.28), 'dark': (0.12, 0.10, 0.09), 'horn': (0.92, 0.90, 0.82)}),
-    'goat':      ('Cow', {'main': (0.86, 0.84, 0.78), 'light': (0.95, 0.94, 0.90), 'shade': (0.60, 0.50, 0.45), 'dark': (0.20, 0.18, 0.16), 'horn': (0.45, 0.40, 0.32)}),
 }
 PATTERN_ALPHA = {'main': 1.0, 'shade': 0.6, 'light': 0.25, 'dark': 0.0, 'eye': 0.0, 'eyew': 0.0, 'horn': 0.0}
 

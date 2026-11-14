@@ -23,6 +23,20 @@ You are a deer in a jungle full of hunters. Landscape, touch only, built for low
 
 An **iOS** preset is included as well; exporting it needs a Mac with Xcode and your Apple team ID.
 
+## Prey or hunter
+
+Main menu -> **Choose animal**. Two sides, each with its own 8-level campaign and endless mode:
+
+| Side | Animals | Goal of a level | Food |
+|---|---|---|---|
+| Prey | deer, gazelle, boar, goat, buffalo | survive the time and eat rare plants | graze |
+| Hunter | lion, tiger, cheetah, wolf, hyena, crocodile | bring down N animals before the time runs out | feed on kills |
+
+Hunter rules: sneak close (animals see a walking hunter from about 16 m, a sneaking one from 5 m), sprint, press the paw button to
+bite. Big animals need several bites; elephants and rhinos cannot be hunted. Stand at the carcass and press again to feed.
+Only *stronger* hunters attack you (strength: crocodile > lion = tiger > hyena = wolf > cheetah); biting a weaker one drives it off.
+Rare-plant abilities belong to the prey side only.
+
 ## Controls (touch)
 
 | Control | What it does |
@@ -58,7 +72,7 @@ All tests start the real game scene and drive it (no display or GPU needed):
 
 ```
 godot --headless --path . --import          # once
-godot --headless --path . -- --test         # 119 feature checks, exit code 0 = all passed
+godot --headless --path . -- --test         # 139 feature checks, exit code 0 = all passed
 godot --headless --path . -- --test-perf    # draw-call / triangle budget at 24 view points per preset
 godot --headless --path . -- --soak=600     # a bot plays for 600 s and prints memory, objects, orphan nodes
 ```
@@ -76,10 +90,15 @@ godot --headless --path . -- --soak=600     # a bot plays for 600 s and prints m
 The sandbox this was built in could reach GitHub only, so models and sounds came from GitHub copies of free packs.
 What that means in practice:
 
-- **Animals use six rigged base models** from one pack (Quaternius, CC0), each with idle, walk, run, attack, eat, death:
-  Deer -> deer, fawn, gazelle - Husky -> lion, hyena - Wolf -> tiger, cheetah, wolf - Fox -> fox and (flattened, scaled) crocodile -
-  Bull -> buffalo, boar - Cow -> goat. Species differ by size, proportions, colour and coat pattern (stripes, spots, scales).
-  There is **no true lion, tiger, cheetah, hyena, boar, goat or crocodile mesh** - the crocodile is the weakest stand-in.
+- **Animals come from three sources** (see `CREDITS.md`):
+  - 0 A.D. (Wildfire Games, **CC BY-SA 3.0**): real textured **lion**, lioness, **crocodile**, **boar**, **gazelle**, **goat** meshes.
+    They ship with only *idle* and *walk* clips, so running is the walk clip played faster, and biting, eating and dying are
+    simple body poses (lunge, head-down tilt, falling on the side) instead of hand-made animations.
+  - Poly by Google (CC BY 3.0): **hyena**, **elephant**, **rhinoceros**, with full clip sets.
+  - Quaternius (CC0): deer / fawn, **wolf**, **fox**, buffalo (bull), with full clip sets.
+  - There is still **no real tiger or cheetah mesh**: both use the 0 A.D. lioness body with a tint and a stripe / spot pattern
+    (the cheetah is also slimmer). They are big cats now, not dogs, but they are not unique models.
+  - CC BY-SA means: if you publish the game you must credit Wildfire Games and keep those animal files under the same licence.
 - **Birds** (junglefowl, crows, hawks) share three small rigged bird models from Blender Studio's DOGWALK (CC BY 4.0)
   with idle, walk, eat and flight clips. They have no death clip (a killed junglefowl tips over), and the hawk has no call.
 - The plant pack is **low-poly stylised**, not photo-real. A detail texture, colour variation and lighting are added,

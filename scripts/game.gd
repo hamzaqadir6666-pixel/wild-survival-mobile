@@ -33,6 +33,8 @@ var level := {}
 var run_time := 0.0
 var escapes := 0
 var plants_eaten := 0
+var kills := 0
+var hunter := false              # this run is played as a predator
 var found_thickets := {}
 var found_landmarks := {}
 var found_lakes := {}
@@ -184,11 +186,12 @@ func _loading_step() -> void:
 		6:
 			grass = Grass.new(); add_child(grass); grass.setup(vegetation.material)
 			plants = Plants.new(); add_child(plants); plants.setup()
-			player = Player.new(); add_child(player); player.setup_deer()
+			player = Player.new(); add_child(player); player.setup_player(Save.character())
 			player.died.connect(_on_died)
 			player.note.connect(hud.notify)
 			player.plant_wanted.connect(_on_action)
 			player.hurt.connect(_on_hurt)
+			player.bite_wanted.connect(_on_bite)
 			player.reset_run(start_point)
 			load_bar.value = 80.0
 			_load_step = 7
@@ -205,7 +208,7 @@ func _loading_step() -> void:
 				sky.day_started.connect(_on_dawn)
 				sky.night_started.connect(func(): night_alive = player.alive)
 			if fauna.build_some(12): _load_step = 8
-			load_bar.value = 80.0 + 18.0 * fauna.prey.size() / 60.0
+			load_bar.value = 80.0 + 18.0 * minf(1.0, fauna.prey.size() / 140.0)
 		8:
 			fawn = Animal.new(); add_child(fawn); fawn.setup("fawn")
 			var fp: Array = World.info.fawn
@@ -225,15 +228,30 @@ func in_run() -> bool:
 	return state == PLAY or state == PAUSE
 
 func start_level(i: int) -> void:
-	level_index = clampi(i, 0, D.LEVELS.size() - 1)
+	level_index = clampi(i, 0, levels().size() - 1)
 	endless = false
-	level = D.LEVELS[level_index]
+	level = levels()[level_index]
 	_begin_run()
 
 func start_endless() -> void:
 	endless = true
-	level = D.ENDLESS
+	level = D.PRED_ENDLESS if Save.side() == "pred" else D.ENDLESS
 	_begin_run()
+
+## the campaign of the side that is selected in the menu
+func levels() -> Array:
+	return D.PRED_LEVELS if Save.side() == "pred" else D.LEVELS
+
+func unlocked() -> int:
+	return int(Save.d.unlocked_pred) if Save.side() == "pred" else int(Save.d.unlocked)
+
+## menu: put the chosen animal in front of the menu camera
+func show_character() -> void:
+	if state != MENU: return
+	player.set_character(Save.character())
+	player.apply_quality()
+	player.reset_run(Vector2(400, 520))
+	player.yaw = cam_yaw + 0.6; player.rotation.y = player.yaw
 
 func restart() -> void:
 	if endless: start_endless()
@@ -244,7 +262,9 @@ func _begin_run() -> void:
 	for tries in 30:
 		if World.thicket_at(start_point.x, start_point.y, 20.0) < 0 and World.biome(start_point.x, start_point.y) != World.ROCK: break
 		start_point = World.random_dry_point(_rng)
-	run_time = 0.0; escapes = 0; plants_eaten = 0
+	player.set_character(Save.character())
+	hunter = player.hunter
+	run_time = 0.0; escapes = 0; plants_eaten = 0; kills = 0
 	found_thickets = {}; found_landmarks = {}; found_lakes = {}
 	fawn_found = false; night_alive = false
 	_over_timer = 0.0; _last_threat = 0; shake = 0.0
@@ -265,7 +285,10 @@ func _begin_run() -> void:
 	state = PLAY
 	Save.d.stats.games = int(Save.d.stats.games) + 1
 	vegetation.update_visibility(player.position, true)
-	if endless: hud.notify("Endless mode: survive as long as you can.", 0)
+	if hunter:
+		if endless: hud.notify("Endless hunt: stay fed and stay alive.", 0)
+		else: hud.notify("Hunt %d: bring down %d animals within %s." % [level_index + 1, int(level.kills), D.fmt_time(level.time)], 0)
+	elif endless: hud.notify("Endless mode: survive as long as you can.", 0)
 	else: hud.notify("Level %d: survive %s and eat %d rare plants." % [level_index + 1, D.fmt_time(level.time), level.plants], 0)
 	if not bool(Save.d.tutorial_done) and not Cfg.test_mode:
 		state = PAUSE
@@ -307,6 +330,9 @@ func to_menu() -> void:
 	menus.open("main")
 
 func goal_text() -> String:
+	if hunter:
+		if endless: return "Endless hunt  %s    Kills %d" % [D.fmt_time(run_time), kills]
+		return "Kills %d / %d    Time left %s" % [mini(kills, int(level.kills)), int(level.kills), D.fmt_time(maxf(0.0, float(level.time) - run_time))]
 	if endless:
 		return "Endless  %s    Best %s" % [D.fmt_time(run_time), D.fmt_time(maxf(float(Save.d.best_endless), run_time))]
 	return "Survive %s / %s    Rare plants %d / %d" % [D.fmt_time(minf(run_time, level.time)), D.fmt_time(level.time), mini(plants_eaten, int(level.plants)), int(level.plants)]
@@ -343,9 +369,16 @@ func _process(delta: float) -> void:
 	if state == MENU:
 		# slow fly-around behind the menu
 		cam_yaw += dt * 0.05
-		var c := Vector3(400.0 + sin(cam_yaw) * 60.0, 0, 520.0 + cos(cam_yaw) * 60.0)
-		camera.position = Vector3(c.x, maxf(World.height(c.x, c.z), 0.0) + 16.0, c.z)
-		camera.look_at(Vector3(400, 4, 520), Vector3.UP)
+		if menus.current == "character":
+			# close-up of the chosen animal
+			var pp := player.position
+			camera.position = pp + Vector3(sin(cam_yaw * 6.0) * 5.5, 2.2, cos(cam_yaw * 6.0) * 5.5)
+			camera.look_at(pp + Vector3(0, 0.9, 0), Vector3.UP)
+			player.play("idle")
+		else:
+			var c := Vector3(400.0 + sin(cam_yaw) * 60.0, 0, 520.0 + cos(cam_yaw) * 60.0)
+			camera.position = Vector3(c.x, maxf(World.height(c.x, c.z), 0.0) + 16.0, c.z)
+			camera.look_at(Vector3(400, 4, 520), Vector3.UP)
 		sky.update(0.0, camera.position)
 		vegetation.update_visibility(camera.position)
 		grass.update(camera.position)
@@ -410,7 +443,7 @@ func _camera_update(dt: float) -> void:
 func _slow_update() -> void:
 	var p := player.position
 	# action button
-	var near := plants.nearest(p, 2.8) if player.alive else -1
+	var near := plants.nearest(p, 2.8) if player.alive and not hunter else -1
 	if near >= 0:
 		var t: String = plants.items[near].t
 		controls.action_icon = Hud.ABILITY_ICON.get(t, Hud.PLANT_ICON.get(t, "leaf"))
@@ -419,7 +452,15 @@ func _slow_update() -> void:
 		var c := player.context()
 		controls.action_icon = "leaf" if c == "graze" else ("drop" if c == "drink" else "")
 		hud.hint = "Graze" if c == "graze" else ("Drink" if c == "drink" else "")
-		if player.action != "": hud.hint = "Grazing..." if player.action == "graze" else "Drinking..."
+		if hunter:
+			# hunters: bite what is in reach, feed on a carcass, drink at the shore
+			if fauna.prey_in_reach():
+				controls.action_icon = "paw"; hud.hint = "Bite!"
+			elif player.food < 99.0 and fauna.carcass_near(p, 2.6) != null:
+				controls.action_icon = "paw"; hud.hint = "Feed"
+			elif c == "":
+				controls.action_icon = "paw"; hud.hint = "Bite"
+		if player.action != "": hud.hint = {"graze": "Grazing...", "drink": "Drinking...", "feed": "Feeding..."}[player.action]
 	controls.queue_redraw()
 	# discoveries
 	if player.alive:
@@ -481,10 +522,46 @@ func _landmark_bonus(l: Dictionary) -> void:
 
 func _goals() -> void:
 	if endless or not player.alive: return
+	if hunter:
+		if kills >= int(level.kills): _finish(true, "")
+		elif run_time >= float(level.time): _finish(false, "The hunt failed: out of time")
+		return
 	if run_time >= float(level.time) and plants_eaten >= int(level.plants):
 		_finish(true, "")
 
+## a hunter pressed the action button
+func _hunter_action() -> void:
+	if fauna.prey_in_reach():
+		player.try_bite()
+		return
+	var c: Prey = fauna.carcass_near(player.position, 2.6)
+	if c != null and player.food < 99.0:
+		player.begin_feed(c)
+	elif player.context() == "drink": player.begin_context()
+	else: player.try_bite()
+
+func _on_bite() -> void:
+	var r: Dictionary = fauna.player_bite(float(player.ch.bite))
+	if not r.hit:
+		Sfx.play("step1", 0.4, 0.7)
+		return
+	Sfx.play("thud", 0.9, 1.1)
+	shake = 0.5
+	if r.get("giant", false): hud.notify("The %s does not even notice your bite." % str(r.name).to_lower(), 1)
+	elif r.get("rival", false):
+		hud.notify(("The %s backs off." if r.scared else "The %s is stronger than you. Get away!") % str(r.name).to_lower(), 0 if r.scared else 2)
+	elif r.killed:
+		kills += 1
+		Save.d.stats.kills = int(Save.d.stats.get("kills", 0)) + 1
+		if not Cfg.test_mode: Input.vibrate_handheld(60)
+		hud.notify("You brought down a %s. Press the button again to feed." % str(r.name).to_lower(), 3)
+		_achieve("first_kill")
+	else: hud.notify("The %s is wounded and runs!" % str(r.name).to_lower(), 1)
+
 func _on_action() -> void:
+	if hunter:
+		_hunter_action()
+		return
 	var i := plants.nearest(player.position, 2.8)
 	if i < 0:
 		player.begin_context()
@@ -570,13 +647,20 @@ func _finish(won: bool, cause: String) -> void:
 	if state != PLAY: return
 	var s: Dictionary = Save.d.stats
 	s.best_time = maxf(float(s.best_time), run_time)
-	if endless: Save.d.best_endless = maxf(float(Save.d.best_endless), run_time)
+	if endless:
+		if hunter: Save.d.best_endless_pred = maxf(float(Save.d.best_endless_pred), run_time)
+		else: Save.d.best_endless = maxf(float(Save.d.best_endless), run_time)
 	if won:
 		s.levels_done = int(s.levels_done) + 1
-		Save.d.unlocked = clampi(maxi(int(Save.d.unlocked), level_index + 2), 1, D.LEVELS.size())
-		if level_index == D.LEVELS.size() - 1: _achieve("campaign")
+		if hunter:
+			Save.d.unlocked_pred = clampi(maxi(int(Save.d.unlocked_pred), level_index + 2), 1, D.PRED_LEVELS.size())
+			if level_index == D.PRED_LEVELS.size() - 1: _achieve("apex")
+		else:
+			Save.d.unlocked = clampi(maxi(int(Save.d.unlocked), level_index + 2), 1, D.LEVELS.size())
+			if level_index == D.LEVELS.size() - 1: _achieve("campaign")
 	result = {"won": won, "cause": cause, "time": run_time, "day": sky.day, "escapes": escapes, "plants": plants_eaten, "discoveries": discoveries(),
-		"wildlife": fauna.seen_count(), "level": level_index, "endless": endless, "best": float(Save.d.best_endless)}
+		"wildlife": fauna.seen_count(), "level": level_index, "endless": endless, "best": float(Save.d.best_endless_pred if hunter else Save.d.best_endless),
+		"kills": kills, "hunter": hunter, "levels": levels().size()}
 	Save.store()
 	state = OVER
 	controls.enabled = false
@@ -586,7 +670,7 @@ func _finish(won: bool, cause: String) -> void:
 ## extra: a lost fawn that follows you once found
 func _fawn_update(dt: float) -> void:
 	var d := fawn.dist_to(player.position)
-	var tier := Animal.TIER_NEAR if d < float(Cfg.v("anim_near")) else Animal.TIER_FAR
+	var tier := Animal.TIER_NEAR if d < float(Cfg.v("anim_near")) and not hunter else Animal.TIER_FAR
 	fawn.set_tier(tier)
 	if tier != Animal.TIER_NEAR: return
 	if not fawn_found:

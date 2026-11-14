@@ -18,6 +18,12 @@ const HOWTO := [
 	["clover", "Glowing rare plants give permanent abilities: speed, night vision, health, stamina, silent steps and more. Red toadstools are poison."],
 	["flag", "Finish the goals at the top of the screen to complete a level. Find landmarks and thickets for bonuses."],
 ]
+const HOWTO_PRED := [
+	["paw", "You are the hunter. SNEAK up on a herd - animals notice a walking hunter from far away - then SPRINT and press the paw button to bite."],
+	["heart", "Big animals need several bites. When one is down, stand next to it and press the button again to feed. Meat is your only food; drink at the shore."],
+	["clock", "Each hunt asks for a number of kills before the time runs out. Elephants and rhinos cannot be hunted."],
+	["eye", "Stronger hunters attack you: a cheetah must fear almost everyone, a lion only the crocodiles. Bite a weaker rival and it backs off."],
+]
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -114,7 +120,7 @@ func back_pressed() -> void:
 	## Android back button / Escape
 	match current:
 		"main": pass
-		"levels", "howto", "stats", "achievements", "guide": open("main" if not game.in_run() else "pause")
+		"levels", "howto", "stats", "achievements", "guide", "character": open("main" if not game.in_run() else "pause")
 		"settings": open("main" if not game.in_run() else "pause")
 		"pause", "map": game.resume()
 		"tutorial": pass
@@ -123,46 +129,92 @@ func back_pressed() -> void:
 # ---------------------------------------------------------------- main menu
 func _build_main() -> void:
 	var v := _frame("WILD SURVIVAL", 520.0)
-	var s := _text(v, "Mobile Edition", 17, Color(0.8, 0.95, 0.8)); s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var pred := Save.side() == "pred"
+	var who: String = D.SPECIES[Save.character()].name
+	var s := _text(v, "Playing as: %s (%s)" % [who, "hunter" if pred else "prey"], 17, Color(1.0, 0.8, 0.7) if pred else Color(0.8, 0.95, 0.8)); s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var g := GridContainer.new()
 	g.columns = 2
 	g.add_theme_constant_override("h_separation", 10)
-	g.add_theme_constant_override("v_separation", 10)
+	g.add_theme_constant_override("v_separation", 8)
 	v.add_child(g)
-	var lvl := int(Save.d.unlocked)
-	g.add_child(UI.button("Continue: Level %d" % mini(lvl, 8), func(): game.start_level(mini(lvl, 8) - 1), 21, Vector2(244, 64), "play"))
-	g.add_child(UI.button("Level select", func(): open("levels"), 21, Vector2(244, 64), "flag"))
-	g.add_child(UI.button("Endless mode", func(): game.start_endless(), 21, Vector2(244, 64), "clock"))
-	g.add_child(UI.button("How to play", func(): open("howto"), 21, Vector2(244, 64), "eye"))
-	g.add_child(UI.button("Animal & plant guide", func(): open("guide"), 19, Vector2(244, 64), "paw"))
-	g.add_child(UI.button("Statistics", func(): open("stats"), 21, Vector2(244, 64), "star"))
-	g.add_child(UI.button("Achievements", func(): open("achievements"), 21, Vector2(244, 64), "shield"))
-	g.add_child(UI.button("Settings", func(): open("settings"), 21, Vector2(244, 64), "gear"))
-	var best := float(Save.d.best_endless)
+	var lvl: int = mini(game.unlocked(), game.levels().size())
+	var sz := Vector2(244, 58)
+	g.add_child(UI.button("Continue: %s %d" % ["Hunt" if pred else "Level", lvl], func(): game.start_level(lvl - 1), 21, sz, "play"))
+	g.add_child(UI.button("Choose animal", func(): open("character"), 21, sz, "paw"))
+	g.add_child(UI.button("Level select", func(): open("levels"), 21, sz, "flag"))
+	g.add_child(UI.button("Endless mode", func(): game.start_endless(), 21, sz, "clock"))
+	g.add_child(UI.button("How to play", func(): open("howto"), 21, sz, "eye"))
+	g.add_child(UI.button("Animal & plant guide", func(): open("guide"), 19, sz, "leaf"))
+	g.add_child(UI.button("Statistics", func(): open("stats"), 21, sz, "star"))
+	g.add_child(UI.button("Achievements", func(): open("achievements"), 21, sz, "shield"))
+	var h := _row(v)
+	h.add_child(UI.button("Settings", func(): open("settings"), 21, sz, "gear"))
+	var best := float(Save.d.best_endless_pred if pred else Save.d.best_endless)
 	if best > 0.0:
 		var b := _text(v, "Endless best: %s" % D.fmt_time(best), 16, UI.GOLD); b.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
+## prey or hunter, and which animal
+func _build_character() -> void:
+	var v := _frame("CHOOSE YOUR ANIMAL", 800.0)
+	var side := Save.side()
+	var h := _row(v)
+	for e in [["prey", "PREY  -  survive", "leaf"], ["pred", "HUNTER  -  hunt", "paw"]]:
+		var key: String = e[0]
+		var b := UI.button(e[1], func(): _pick(key, ""), 21, Vector2(300, 60), e[2])
+		if key == side: b.add_theme_stylebox_override("normal", UI.box(Color(0.55, 0.25, 0.2, 1.0) if key == "pred" else Color(0.35, 0.55, 0.25, 1.0), 12, 10))
+		h.add_child(b)
+	_text(v, "Hunter: sneak up on herds, bite, feed on the kill, finish each hunt before the time runs out." if side == "pred" else "Prey: stay alive among the hunters, graze, drink and eat rare plants.",
+		16, Color(0.85, 0.9, 0.85), 740.0).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var g := GridContainer.new()
+	g.columns = 3
+	g.add_theme_constant_override("h_separation", 8)
+	g.add_theme_constant_override("v_separation", 8)
+	v.add_child(g)
+	var cur := Save.character()
+	for sp in D.CHAR_ORDER[side]:
+		var c: Dictionary = D.CHARACTERS[sp]
+		var name_: String = sp
+		var line := "%s\nSpeed %d  Health %d  Stamina %d" % [D.SPECIES[sp].name, int(round(float(c.run) * 10.0)), int(c.hp), int(c.stamina)]
+		if c.has("bite"): line += "  Bite %d" % int(c.bite)
+		var b2 := UI.button(line, func(): _pick(side, name_), 15, Vector2(250, 66))
+		if sp == cur: b2.add_theme_stylebox_override("normal", UI.box(Color(0.6, 0.5, 0.15, 1.0), 12, 10))
+		g.add_child(b2)
+	_text(v, "%s: %s" % [D.SPECIES[cur].name, D.CHARACTERS[cur].text], 17, UI.GOLD, 740.0).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var h2 := _row(v)
+	h2.add_child(UI.button("Back", func(): open("main"), 20, Vector2(200, 58), "back"))
+	h2.add_child(UI.button("Play", func(): game.start_level(mini(game.unlocked(), game.levels().size()) - 1), 20, Vector2(200, 58), "play"))
+
+func _pick(side: String, sp: String) -> void:
+	Save.d.side = side
+	if sp != "": Save.d.char[side] = sp
+	Save.store()
+	game.show_character()
+	open("character")
+
 func _build_levels() -> void:
-	var v := _frame("LEVELS", 640.0)
+	var pred := Save.side() == "pred"
+	var v := _frame("HUNTS" if pred else "LEVELS", 640.0)
 	var g := GridContainer.new()
 	g.columns = 4
 	g.add_theme_constant_override("h_separation", 10)
 	g.add_theme_constant_override("v_separation", 10)
 	v.add_child(g)
-	for i in D.LEVELS.size():
-		var L: Dictionary = D.LEVELS[i]
-		var open_ := i < int(Save.d.unlocked)
-		var txt := "Level %d\n%s  +%d plants\n%d hunters" % [i + 1, D.fmt_time(L.time), L.plants, D.hunter_total(L)]
+	var list: Array = game.levels()
+	for i in list.size():
+		var L: Dictionary = list[i]
+		var open_: bool = i < game.unlocked()
+		var txt := "Level %d\n%s  +%d plants\n%d hunters" % [i + 1, D.fmt_time(L.time), L.plants, D.hunter_total(L)] if not pred else "Hunt %d\n%d kills in %s\n%d rivals" % [i + 1, L.kills, D.fmt_time(L.time), D.hunter_total(L)]
 		var idx := i
-		var b := UI.button(txt if open_ else "Level %d\nlocked" % (i + 1), func(): game.start_level(idx), 15, Vector2(144, 96), "" if open_ else "lock")
+		var b := UI.button(txt if open_ else "%s %d\nlocked" % ["Hunt" if pred else "Level", i + 1], func(): game.start_level(idx), 15, Vector2(144, 96), "" if open_ else "lock")
 		b.disabled = not open_
 		g.add_child(b)
-	_text(v, "Abilities from rare plants are kept between levels.", 15, Color(0.8, 0.95, 0.8)).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_text(v, "Hunters keep their strength; pick another animal for a different challenge." if pred else "Abilities from rare plants are kept between levels.", 15, Color(0.8, 0.95, 0.8)).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_back(v, "main")
 
 func _build_howto() -> void:
 	var v := _frame("HOW TO PLAY", 760.0, true)
-	for e in HOWTO:
+	var pages: Array = (HOWTO_PRED + HOWTO.slice(0, 1) + HOWTO.slice(2, 3)) if Save.side() == "pred" else HOWTO
+	for e in pages:
 		var h := HBoxContainer.new()
 		h.add_theme_constant_override("separation", 12)
 		v.add_child(h)
@@ -274,8 +326,8 @@ func _build_map() -> void:
 
 func _build_gameover() -> void:
 	var r: Dictionary = game.result
-	var v := _frame("YOU DIED", 520.0)
-	_text(v, "Cause: %s" % r.cause, 22, UI.RED).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var v := _frame("YOU DIED" if not str(r.cause).begins_with("The hunt") else "HUNT FAILED", 520.0)
+	_text(v, ("Cause: %s" % r.cause) if not str(r.cause).begins_with("The hunt") else str(r.cause), 22, UI.RED).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_stats_block(v, r)
 	var h := _row(v)
 	h.add_child(UI.button("Try again", func(): game.restart(), 21, Vector2(220, 62), "play"))
@@ -283,10 +335,10 @@ func _build_gameover() -> void:
 
 func _build_complete() -> void:
 	var r: Dictionary = game.result
-	var v := _frame("LEVEL %d COMPLETE" % (int(r.level) + 1), 540.0)
+	var v := _frame("%s %d COMPLETE" % ["HUNT" if r.get("hunter", false) else "LEVEL", int(r.level) + 1], 540.0)
 	_stats_block(v, r)
 	var h := _row(v)
-	if int(r.level) + 1 < D.LEVELS.size():
+	if int(r.level) + 1 < int(r.get("levels", D.LEVELS.size())):
 		h.add_child(UI.button("Next level", func(): game.start_level(int(r.level) + 1), 21, Vector2(220, 62), "play"))
 	else:
 		_text(v, "You finished the whole campaign!", 20, UI.GOLD).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -299,6 +351,9 @@ func _stats_block(v: Control, r: Dictionary) -> void:
 	v.add_child(g)
 	var rows := [["Time survived", D.fmt_time(r.time)], ["Days", str(r.day)], ["Escapes", str(r.escapes)], ["Rare plants eaten", str(r.plants)],
 		["Discoveries", "%d / %d" % [r.discoveries, D.DISCOVERY_TOTAL]], ["Wildlife seen", "%d / %d" % [r.wildlife, D.WILDLIFE_TOTAL]]]
+	if r.get("hunter", false):
+		rows[2] = ["Kills", str(r.kills)]
+		rows.remove_at(3)
 	if r.endless: rows.append(["Best endless time", D.fmt_time(r.best)])
 	for e in rows:
 		_text(g, e[0], 18, Color(0.85, 0.9, 0.85)).custom_minimum_size.x = 250
@@ -312,7 +367,7 @@ func _build_stats() -> void:
 	g.columns = 2
 	g.add_theme_constant_override("h_separation", 30)
 	v.add_child(g)
-	for e in [["Games played", str(int(s.games))], ["Longest survival", D.fmt_time(s.best_time)], ["Endless best", D.fmt_time(Save.d.best_endless)], ["Escapes", str(int(s.escapes))],
+	for e in [["Games played", str(int(s.games))], ["Animals hunted", str(int(s.get("kills", 0)))], ["Longest survival", D.fmt_time(s.best_time)], ["Endless best", D.fmt_time(Save.d.best_endless)], ["Escapes", str(int(s.escapes))],
 			["Rare plants eaten", str(int(s.plants))], ["Levels completed", str(int(s.levels_done))], ["Nights survived", str(int(s.nights))], ["Deaths", str(int(s.deaths))],
 			["Swift Clover speed", "%d%%" % int(round((0.8 + 0.035 * mini(Save.ability("clover"), D.CLOVER_MAX)) * 100.0))]]:
 		_text(g, e[0], 18, Color(0.85, 0.9, 0.85)).custom_minimum_size.x = 260
@@ -357,16 +412,18 @@ func _build_guide() -> void:
 	_back(v, "main")
 
 func _build_tutorial() -> void:
-	var e: Array = HOWTO[_tutorial_page]
-	var v := _frame("WELCOME, LITTLE DEER  (%d / %d)" % [_tutorial_page + 1, HOWTO.size()], 640.0)
+	var pages: Array = HOWTO_PRED if Save.side() == "pred" else HOWTO
+	_tutorial_page = mini(_tutorial_page, pages.size() - 1)
+	var e: Array = pages[_tutorial_page]
+	var v := _frame("%s  (%d / %d)" % ["WELCOME, HUNTER" if Save.side() == "pred" else "WELCOME TO THE WILD", _tutorial_page + 1, pages.size()], 640.0)
 	var h := _row(v)
 	h.add_child(UI.icon_rect(e[0], 64.0, UI.GOLD))
 	_text(h, e[1], 19, Color.WHITE, 480.0)
 	var h2 := _row(v)
 	h2.add_child(UI.button("Skip", func(): _tutorial_done(), 19, Vector2(170, 58)))
-	h2.add_child(UI.button("Next" if _tutorial_page < HOWTO.size() - 1 else "Start", func():
+	h2.add_child(UI.button("Next" if _tutorial_page < pages.size() - 1 else "Start", func():
 		_tutorial_page += 1
-		if _tutorial_page >= HOWTO.size(): _tutorial_done()
+		if _tutorial_page >= pages.size(): _tutorial_done()
 		else: open("tutorial"), 21, Vector2(220, 58), "play"))
 
 func start_tutorial() -> void:

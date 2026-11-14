@@ -9,13 +9,35 @@ use = {}
 for out, f in re.findall(r"'(\w+)': \(?'([\w-]+\.wav)'", code): use[out] = f
 use.update({f'step{i}': '4-218304-A-25.wav' for i in range(1, 5)}); use.update({f'splash{i}': '1-50623-A-15.wav' for i in range(1, 4)})
 use['click'] = '2-152964-A-31.wav'; use['thud'] = '1-103995-A-30.wav'
-L = ['# Credits', '', 'Every third-party file in the game, its author, source and licence.', 'Nothing here is under a non-commercial or share-alike licence.', '',
+L = ['# Credits', '', 'Every third-party file in the game, its author, source and licence.', '',
+     '**Licence summary:** most files are CC0 or CC BY. The 0 A.D. animal models (lion, tiger, cheetah, crocodile, boar, gazelle, goat)',
+     'are **CC BY-SA 3.0**: you may use them commercially, but you must credit Wildfire Games and share any changes to *those models*',
+     'under the same licence. Nothing here is under a non-commercial licence.', '',
      '## Animal models and animations', '',
-     'Pack: **Ultimate Animated Animals** by **Quaternius** - https://quaternius.com/packs/ultimateanimatedanimals.html - **CC0 1.0**',
-     '(downloaded through the GitHub mirror `xxfrigorizxx/The-Legacy-Of-Seroka`; originals kept in `assets_src/quaternius_animals/` with the pack licence).',
-     'Each game file is the pack model re-coloured and re-proportioned by `tools/build_animals.py`; all animation clips are the pack\'s own.', '',
+     '### Quaternius - Ultimate Animated Animals - CC0 1.0', '',
+     'https://quaternius.com/packs/ultimateanimatedanimals.html (downloaded through the GitHub mirror `xxfrigorizxx/The-Legacy-Of-Seroka`;',
+     'originals kept in `assets_src/quaternius_animals/`). Re-coloured by `tools/build_animals.py`; all clips are the pack\'s own.', '',
      '| Game file | Pack model | Triangles | Clips |', '|---|---|---|---|']
-for k, v in animals.items(): L.append(f"| `assets/models/animals/{k}.glb` | {v['base']} | {v['tris']} | {', '.join(v['clips'])} |")
+def rows(pred):
+    for k, v in animals.items():
+        if pred(v['base']): L.append(f"| `assets/models/animals/{k}.glb` | {v['base']} | {v['tris']} | {', '.join(v['clips'])} |")
+rows(lambda b: '/' not in b)
+L += ['', '### 0 A.D. fauna - Wildfire Games - CC BY-SA 3.0', '',
+      'Author and copyright: **Wildfire Games** (https://www.wildfiregames.com/), 0 A.D. art, https://gitlab.com/0ad/0ad - licence **CC BY-SA 3.0**',
+      '(http://creativecommons.org/licenses/by-sa/3.0/). glTF conversions with Idle and Walk clips taken from the GitHub project `Vitexus/ishtaria-client`',
+      '(`assets/zeroad/fauna`, licence note copied to `assets_src/zeroad_fauna/License.txt`); originals in `assets_src/zeroad_fauna/`.',
+      'Changes made here (`tools/build_animals2.py`): clips renamed, second UV set added, colour texture resized to 256 px and saved as',
+      '`assets/models/animals/tex_*.png`. The tiger and the cheetah are the 0 A.D. **lioness** mesh with a tint and a stripe / spot pattern.',
+      'These modified files are released under CC BY-SA 3.0 as well.', '',
+      '| Game file | Source file | Triangles | Clips |', '|---|---|---|---|']
+rows(lambda b: b.startswith('zeroad'))
+L += ['', '### Poly by Google - CC BY 3.0', '',
+      'Spotted hyena (https://poly.pizza/m/0yU1LU3Nkpu), Elephant (https://poly.pizza/m/cx0-TiCjDOx), Rhinoceros (https://poly.pizza/m/11qk1uy0YGH)',
+      'by **Poly by Google**, licence **CC BY 3.0** (https://creativecommons.org/licenses/by/3.0/). The rigged versions used here (meshes bound to the',
+      'Quaternius wolf / bull skeletons and clips, CC0) come from the GitHub project `g0ddest/renethack` (`client/godot/art/ccby/polypizza`);',
+      'originals in `assets_src/poly_google/`. Changes made here: clips renamed, second UV set added, texture saved as `tex_*.png`.', '',
+      '| Game file | Source file | Triangles | Clips |', '|---|---|---|---|']
+rows(lambda b: b.startswith('poly'))
 L += ['', '## Bird models and animations', '',
       'From **DOGWALK** by **Blender Studio** - (CC) Blender Foundation | studio.blender.org - https://studio.blender.org/projects/dogwalk/ - **CC BY 4.0**',
       '(downloaded from the GitHub copy `nikitalita/DOGWALK`, folder `assets/char/birds` and `animations/world`; licence text in `assets/models/birds/LICENCE-DOGWALK.md`).',

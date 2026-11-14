@@ -1,11 +1,12 @@
 class_name Player
 extends Animal
-## The deer. Movement, the four bars, eating, drinking, abilities.
+## The animal you play (prey or hunter). Movement, the four bars, eating, drinking, biting, abilities.
 
 signal died(cause: String)
 signal note(text: String, kind: int)
 signal plant_wanted
 signal hurt(amount: float)
+signal bite_wanted
 
 const GRAVITY := 15.0
 var health := 100.0
@@ -30,9 +31,21 @@ var splash: CPUParticles3D
 var distance_walked := 0.0
 var _warn_food := false
 var _warn_water := false
+var ch := {}                   # D.CHARACTERS entry
+var hunter := false            # playing a predator
+var bite_cool := 0.0
+var carcass: Animal = null     # what a hunter is feeding on
 
-func setup_deer() -> void:
-	setup("deer")
+## swaps the playable animal (menu choice)
+func set_character(sp: String) -> void:
+	if species == sp and model != null: return
+	clear_model()
+	ch = D.CHARACTERS[sp]
+	hunter = ch.side == "pred"
+	setup(sp)
+
+func setup_player(sp: String) -> void:
+	set_character(sp)
 	splash = CPUParticles3D.new()
 	splash.emitting = false
 	splash.amount = 14
@@ -77,14 +90,15 @@ func reset_run(at: Vector2) -> void:
 func refresh_abilities() -> void:
 	var keep_h := max_health - health
 	var keep_s := max_stamina - stamina
-	speed_mult = 0.8 + 0.035 * mini(Save.ability("clover"), D.CLOVER_MAX)
-	max_health = 100.0 + 10.0 * Save.ability("ironbark")
-	max_stamina = 100.0 + 10.0 * Save.ability("sunberry")
+	# plant-eaters grow with rare plants; hunters have fixed strength
+	speed_mult = 1.0 if hunter else 0.8 + 0.035 * mini(Save.ability("clover"), D.CLOVER_MAX)
+	max_health = float(ch.hp) + (0.0 if hunter else 10.0 * Save.ability("ironbark"))
+	max_stamina = float(ch.stamina) + (0.0 if hunter else 10.0 * Save.ability("sunberry"))
 	health = max_health - keep_h
 	stamina = max_stamina - keep_s
 
 func has(key: String) -> bool:
-	return Save.ability(key) > 0
+	return not hunter and Save.ability(key) > 0
 
 func speed_percent() -> int:
 	return int(round(speed_mult * 100.0))
@@ -95,7 +109,7 @@ func context() -> String:
 	var ahead := World.height(position.x + f.x * 1.3, position.z + f.y * 1.3)
 	var here := World.height(position.x, position.z)
 	if (here < 0.12 or ahead < 0.02) and water < 99.0: return "drink"
-	if swimming: return ""
+	if swimming or hunter: return ""
 	var b := World.biome(position.x, position.z)
 	if (b == World.FOREST or b == World.GRASS) and food < 99.0: return "graze"
 	return ""
@@ -130,13 +144,14 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 		if in_water: position.y = -swim_depth
 		return
 	# ---- bars ----
-	var hungry := 100.0 / 420.0
+	bite_cool = maxf(0.0, bite_cool - delta)
+	var hungry := 100.0 / (300.0 if hunter else 420.0)
 	var thirsty := 100.0 / 330.0
 	if sprinting: hungry *= 1.6; thirsty *= 1.6
 	food = maxf(0.0, food - hungry * delta)
 	water = maxf(0.0, water - thirsty * delta)
 	if food < 20.0 and not _warn_food:
-		_warn_food = true; note.emit("You are hungry. Graze on grass.", 1)
+		_warn_food = true; note.emit("You are hungry. Hunt and feed." if hunter else "You are hungry. Graze on grass.", 1)
 	elif food > 35.0: _warn_food = false
 	if water < 20.0 and not _warn_water:
 		_warn_water = true; note.emit("You are thirsty. Find water.", 1)
@@ -164,10 +179,10 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 	sprinting = want_sprint and moving and not exhausted and not sneaking and stamina > 0.0
 	var target_speed := 0.0
 	if moving:
-		if swimming: target_speed = 4.3 if has("lotus") else 2.7
+		if swimming: target_speed = float(ch.get("swim", 4.3 if has("lotus") else 2.7))
 		elif sneaking: target_speed = 1.7
-		elif sprinting: target_speed = cfg.run
-		else: target_speed = cfg.walk
+		elif sprinting: target_speed = ch.run
+		else: target_speed = ch.walk
 		target_speed *= speed_mult * lerpf(0.55, 1.0, mlen)
 		if not swimming and h_here < -0.25: target_speed *= 0.7      # wading
 	speed = move_toward(speed, target_speed, delta * (22.0 if target_speed > speed else 30.0))
@@ -203,8 +218,8 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 	var was_water := in_water
 	in_water = ground < -swim_depth
 	var floor_y := -swim_depth if in_water else ground
-	if want_jump and air <= 0.0 and not in_water and stamina >= 5.0 and action == "":
-		vy = 7.6 if has("springlily") else 5.6
+	if want_jump and air <= 0.0 and not in_water and stamina >= 5.0 and action == "" and float(ch.jump) > 0.0:
+		vy = (7.6 if has("springlily") else 5.6) * sqrt(float(ch.jump))
 		stamina -= 5.0
 		air = 0.01
 	if air > 0.0 or vy > 0.0:
@@ -223,6 +238,7 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 	# ---- noise heard by hunters ----
 	if has("ghostfern"): noise = 0.0
 	elif speed < 0.3: noise = 0.0
+	elif ch.get("quiet", false) and not sprinting: noise = 2.0
 	elif in_water: noise = 15.0
 	elif sneaking: noise = 3.0
 	elif sprinting: noise = 26.0
@@ -241,10 +257,21 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 				food = minf(100.0, food + 15.0)
 				Sfx.play("eat", 0.5, randf_range(0.9, 1.1))
 				if food >= 100.0: action = ""; note.emit("Food is full.", 0)
+			elif action == "feed":
+				if carcass == null or not is_instance_valid(carcass) or carcass.alive or float(carcass.get("meat")) <= 0.0:
+					action = ""; note.emit("Nothing left to eat.", 0)
+				else:
+					carcass.set("meat", float(carcass.get("meat")) - 20.0)
+					food = minf(100.0, food + 20.0)
+					heal(6.0)
+					Sfx.play("eat", 0.6, randf_range(0.7, 0.85))
+					if food >= 100.0: action = ""; note.emit("You are full.", 0)
 			elif action == "drink":
 				water = minf(100.0, water + 24.0)
 				Sfx.play("drink", 0.5, randf_range(0.9, 1.1))
 				if water >= 100.0: action = ""; note.emit("Water is full.", 0)
+	elif bite_cool > 0.45:
+		play("attack", 1.6)
 	elif air > 0.0:
 		play("jump", 1.0)
 	elif in_water:
@@ -260,6 +287,23 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 			if ground < 0.02: _splash_sound(0.35 if not in_water else 0.5)
 			elif not has("ghostfern"):
 				Sfx.play("step%d" % (1 + randi() % 4), 0.12 if sneaking else (0.42 if sprinting else 0.28), randf_range(0.9, 1.15))
+
+## hunters: lunge and bite.  The game decides what was hit.
+func try_bite() -> bool:
+	if not hunter or bite_cool > 0.0 or not alive or stamina < 6.0 or air > 0.05: return false
+	bite_cool = 0.8
+	stamina -= 6.0
+	action = ""
+	cur_anim = ""
+	play("attack", 1.6)
+	bite_wanted.emit()
+	return true
+
+func begin_feed(c: Animal) -> void:
+	carcass = c
+	action = "feed"
+	action_time = 0.6
+	speed = 0.0
 
 func begin_context() -> void:
 	var c := context()

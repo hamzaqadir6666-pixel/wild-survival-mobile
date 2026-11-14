@@ -72,12 +72,13 @@ func can_enter(x: float, z: float) -> bool:
 
 ## deer sensing: sight (cone, shorter when the deer sneaks, at night or in rain) and hearing
 func senses_deer() -> bool:
-	var deer: Animal = fauna.deer
+	var deer: Player = fauna.deer
 	if deer == null or not deer.alive or deer.hidden: return false
+	if deer.hunter and not fauna.hostile(species): return false      # rivals leave an equal or stronger hunter alone
 	var d := dist_to(deer.position)
 	if style == "water":
 		return d < cfg.sight and World.height(deer.position.x, deer.position.z) < 0.7
-	var vis: float = cfg.sight * fauna.sight_mult(species)
+	var vis: float = cfg.sight * fauna.sight_mult(species) * (0.6 if deer.hunter else 1.0)
 	if deer.sneaking: vis *= 0.5
 	if d < vis:
 		var to := Vector2(deer.position.x - position.x, deer.position.z - position.z) / maxf(d, 0.01)
@@ -106,6 +107,11 @@ func engage() -> void:
 	for p in pack:
 		if p != self and is_instance_valid(p) and p.dist_to(position) < 90.0: p.alert(last_seen)
 
+## bitten by a hunter player that it does not dare to fight: runs home and stays away for a while
+func scare() -> void:
+	give_up(30.0)
+	fauna.animal_sound(self, cfg.sound, float(cfg.pitch) * 1.2, 0.8)
+
 func give_up(rest_time: float) -> void:
 	var was_deer := on_deer
 	target = null
@@ -119,7 +125,7 @@ func tick(delta: float) -> void:
 	voice -= delta
 	tired = maxf(0.0, tired - delta)
 	hunger -= delta
-	var deer: Animal = fauna.deer
+	var deer: Player = fauna.deer
 	var sensed := false
 	if state != ATTACK and state != CHASE and tired <= 0.0 and not leaving:
 		sensed = senses_deer()
@@ -179,7 +185,7 @@ func _begin_stalk() -> void:
 	timer = 0.0
 
 func _stalk(delta: float, sensed: bool) -> void:
-	var deer: Animal = fauna.deer
+	var deer: Player = fauna.deer
 	var d := dist_to(deer.position)
 	if not deer.alive or aware <= 0.05 or (deer.hidden and unseen > 2.0):
 		on_deer = false
@@ -294,7 +300,7 @@ func _find_prey() -> bool:
 	var best: Animal = null
 	var bd: float = float(cfg.sight)
 	for p in fauna.prey:
-		if p.alive:
+		if p.alive and not p.giant:
 			var d: float = p.dist_to(position)
 			if d < bd:
 				bd = d; best = p

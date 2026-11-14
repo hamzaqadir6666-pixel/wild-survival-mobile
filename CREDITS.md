@@ -1,28 +1,56 @@
 # Credits
 
 Every third-party file in the game, its author, source and licence.
-Nothing here is under a non-commercial or share-alike licence.
+
+**Licence summary:** most files are CC0 or CC BY. The 0 A.D. animal models (lion, tiger, cheetah, crocodile, boar, gazelle, goat)
+are **CC BY-SA 3.0**: you may use them commercially, but you must credit Wildfire Games and share any changes to *those models*
+under the same licence. Nothing here is under a non-commercial licence.
 
 ## Animal models and animations
 
-Pack: **Ultimate Animated Animals** by **Quaternius** - https://quaternius.com/packs/ultimateanimatedanimals.html - **CC0 1.0**
-(downloaded through the GitHub mirror `xxfrigorizxx/The-Legacy-Of-Seroka`; originals kept in `assets_src/quaternius_animals/` with the pack licence).
-Each game file is the pack model re-coloured and re-proportioned by `tools/build_animals.py`; all animation clips are the pack's own.
+### Quaternius - Ultimate Animated Animals - CC0 1.0
+
+https://quaternius.com/packs/ultimateanimatedanimals.html (downloaded through the GitHub mirror `xxfrigorizxx/The-Legacy-Of-Seroka`;
+originals kept in `assets_src/quaternius_animals/`). Re-coloured by `tools/build_animals.py`; all clips are the pack's own.
 
 | Game file | Pack model | Triangles | Clips |
 |---|---|---|---|
 | `assets/models/animals/deer.glb` | Deer | 2098 | attack, death, eat, hit, idle, idle2, jump, run, walk |
-| `assets/models/animals/gazelle.glb` | Deer | 2098 | attack, death, eat, hit, idle, idle2, jump, run, walk |
-| `assets/models/animals/lion.glb` | Husky | 1920 | attack, death, eat, hit, idle, idle2, jump, run, walk |
-| `assets/models/animals/hyena.glb` | Husky | 1920 | attack, death, eat, hit, idle, idle2, jump, run, walk |
-| `assets/models/animals/tiger.glb` | Wolf | 1962 | attack, death, eat, hit, idle, idle2, jump, run, walk |
-| `assets/models/animals/cheetah.glb` | Wolf | 1962 | attack, death, eat, hit, idle, idle2, jump, run, walk |
 | `assets/models/animals/wolf.glb` | Wolf | 1962 | attack, death, eat, hit, idle, idle2, jump, run, walk |
 | `assets/models/animals/fox.glb` | Fox | 1848 | attack, death, eat, hit, idle, idle2, jump, run, walk |
-| `assets/models/animals/crocodile.glb` | Fox | 1848 | attack, death, eat, hit, idle, idle2, jump, run, walk |
 | `assets/models/animals/buffalo.glb` | Bull | 2418 | attack, death, eat, hit, idle, idle2, jump, run, walk |
-| `assets/models/animals/boar.glb` | Bull | 2418 | attack, death, eat, hit, idle, idle2, jump, run, walk |
-| `assets/models/animals/goat.glb` | Cow | 2450 | attack, death, eat, hit, idle, idle2, jump, run, walk |
+
+### 0 A.D. fauna - Wildfire Games - CC BY-SA 3.0
+
+Author and copyright: **Wildfire Games** (https://www.wildfiregames.com/), 0 A.D. art, https://gitlab.com/0ad/0ad - licence **CC BY-SA 3.0**
+(http://creativecommons.org/licenses/by-sa/3.0/). glTF conversions with Idle and Walk clips taken from the GitHub project `Vitexus/ishtaria-client`
+(`assets/zeroad/fauna`, licence note copied to `assets_src/zeroad_fauna/License.txt`); originals in `assets_src/zeroad_fauna/`.
+Changes made here (`tools/build_animals2.py`): clips renamed, second UV set added, colour texture resized to 256 px and saved as
+`assets/models/animals/tex_*.png`. The tiger and the cheetah are the 0 A.D. **lioness** mesh with a tint and a stripe / spot pattern.
+These modified files are released under CC BY-SA 3.0 as well.
+
+| Game file | Source file | Triangles | Clips |
+|---|---|---|---|
+| `assets/models/animals/lion.glb` | zeroad_fauna/lion.glb | 820 | idle, walk |
+| `assets/models/animals/tiger.glb` | zeroad_fauna/lioness.glb | 980 | idle, walk |
+| `assets/models/animals/cheetah.glb` | zeroad_fauna/lioness.glb | 980 | idle, walk |
+| `assets/models/animals/crocodile.glb` | zeroad_fauna/crocodile.glb | 700 | idle, walk |
+| `assets/models/animals/boar.glb` | zeroad_fauna/boar.glb | 362 | idle, walk |
+| `assets/models/animals/gazelle.glb` | zeroad_fauna/gazelle.glb | 306 | idle, walk |
+| `assets/models/animals/goat.glb` | zeroad_fauna/goat.glb | 366 | idle, walk |
+
+### Poly by Google - CC BY 3.0
+
+Spotted hyena (https://poly.pizza/m/0yU1LU3Nkpu), Elephant (https://poly.pizza/m/cx0-TiCjDOx), Rhinoceros (https://poly.pizza/m/11qk1uy0YGH)
+by **Poly by Google**, licence **CC BY 3.0** (https://creativecommons.org/licenses/by/3.0/). The rigged versions used here (meshes bound to the
+Quaternius wolf / bull skeletons and clips, CC0) come from the GitHub project `g0ddest/renethack` (`client/godot/art/ccby/polypizza`);
+originals in `assets_src/poly_google/`. Changes made here: clips renamed, second UV set added, texture saved as `tex_*.png`.
+
+| Game file | Source file | Triangles | Clips |
+|---|---|---|---|
+| `assets/models/animals/hyena.glb` | poly_google/Hyena.glb | 868 | attack, death, hit, idle, run, walk |
+| `assets/models/animals/elephant.glb` | poly_google/Elephant.glb | 934 | attack, death, hit, idle, run, walk |
+| `assets/models/animals/rhino.glb` | poly_google/Rhinoceros.glb | 742 | attack, death, hit, idle, run, walk |
 
 ## Bird models and animations
 

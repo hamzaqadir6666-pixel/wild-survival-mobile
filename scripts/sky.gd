@@ -58,6 +58,7 @@ func setup() -> void:
 	sun.shadow_bias = 0.08
 	sun.shadow_normal_bias = 1.5
 	sun.shadow_blur = 1.0
+	sun.shadow_opacity = 0.62            # shade under trees stays readable
 	add_child(sun)
 	var sm := SphereMesh.new()
 	sm.radius = 1.0; sm.height = 2.0; sm.radial_segments = 20; sm.rings = 10
@@ -169,18 +170,18 @@ func _refresh(cam: Vector3, force: bool) -> void:
 	var gloom := clampf((cover - 0.25) * 1.1, 0.0, 0.8)
 	# light direction: sun by day, moon by night, both arc across the sky
 	var ang := (hour - 6.0) / 12.0 * PI if dayf > 0.5 else (fmod(hour + 6.0, 24.0)) / 12.0 * PI
-	var elev := maxf(0.22, sin(ang))
+	var elev := maxf(0.42, sin(ang))          # never a grazing sun: long shadows made the forest floor black
 	var dir := Vector3(cos(ang) * 0.9, elev, 0.35).normalized()
 	sun.look_at_from_position(Vector3.ZERO, -dir, Vector3.UP)
 	var warm := Color(1.0, 0.95, 0.84).lerp(Color(1.0, 0.62, 0.35), dusk * 0.8)
 	sun.light_color = Color(0.50, 0.62, 0.95).lerp(warm, dayf)
 	sun.light_energy = lerpf(0.16, 1.25, dayf) * (1.0 - gloom * 0.65) + flash * 1.2
-	var amb_day := Color(0.60, 0.67, 0.74).lerp(Color(0.5, 0.52, 0.55), gloom)
+	var amb_day := Color(0.78, 0.84, 0.88).lerp(Color(0.5, 0.52, 0.55), gloom)
 	var amb_night := Color(0.10, 0.13, 0.24)
-	var amb_e := lerpf(0.55, 0.85, dayf) * (1.0 - gloom * 0.3)
+	var amb_e := lerpf(0.60, 1.15, dayf) * (1.0 - gloom * 0.3)
 	if night_vision:
 		amb_night = Color(0.28, 0.40, 0.40)      # soft, slightly green lift; tuned to stay clearly darker than day
-		amb_e = lerpf(0.80, 0.85, dayf) * (1.0 - gloom * 0.3)
+		amb_e = lerpf(0.85, 1.15, dayf) * (1.0 - gloom * 0.3)
 	env.ambient_light_color = amb_night.lerp(amb_day, dayf)
 	env.ambient_light_energy = amb_e + flash * 1.5
 	var top := Color(0.012, 0.02, 0.06).lerp(Color(0.20, 0.45, 0.85), dayf)

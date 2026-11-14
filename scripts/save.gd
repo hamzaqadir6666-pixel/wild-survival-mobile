@@ -11,8 +11,8 @@ func _ready() -> void:
 		if typeof(j) == TYPE_DICTIONARY: _merge(d, j)
 
 func reset() -> void:
-	d = {"unlocked": 1, "best_endless": 0.0, "abilities": {}, "tutorial_done": false,
-		"stats": {"best_time": 0.0, "escapes": 0, "plants": 0, "games": 0, "deaths": 0, "levels_done": 0, "nights": 0},
+	d = {"unlocked": 1, "unlocked_pred": 1, "side": "prey", "char": {"prey": "deer", "pred": "lion"}, "best_endless_pred": 0.0, "best_endless": 0.0, "abilities": {}, "tutorial_done": false,
+		"stats": {"best_time": 0.0, "escapes": 0, "plants": 0, "games": 0, "deaths": 0, "levels_done": 0, "nights": 0, "kills": 0},
 		"seen": {}, "plants_found": {}, "landmarks": {}, "ach": {}}
 
 func _merge(a: Dictionary, b: Dictionary) -> void:
@@ -36,3 +36,12 @@ func unlock(ach: String) -> bool:
 	if d.ach.has(ach): return false
 	d.ach[ach] = true
 	return true
+
+func side() -> String:
+	return "pred" if str(d.side) == "pred" else "prey"
+
+## the animal chosen for the current side
+func character() -> String:
+	var c := str(d.char.get(side(), ""))
+	if not D.CHARACTERS.has(c) or D.CHARACTERS[c].side != side(): c = D.CHAR_ORDER[side()][0]
+	return c
