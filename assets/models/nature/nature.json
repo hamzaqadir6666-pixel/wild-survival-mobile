@@ -1,0 +1,172 @@
+{
+ "tree_giant": {
+  "source": "Willow_2",
+  "tris": 600,
+  "height": 3.33,
+  "radius": 2.8,
+  "lod1_tris": 148
+ },
+ "tree_big": {
+  "source": "Willow_4",
+  "tris": 560,
+  "height": 3.41,
+  "radius": 2.06,
+  "lod1_tris": 138
+ },
+ "tree_a": {
+  "source": "CommonTree_2",
+  "tris": 519,
+  "height": 3.05,
+  "radius": 1.56,
+  "lod1_tris": 130
+ },
+ "tree_b": {
+  "source": "CommonTree_5",
+  "tris": 480,
+  "height": 2.53,
+  "radius": 1.4,
+  "lod1_tris": 118
+ },
+ "tree_c": {
+  "source": "Willow_3",
+  "tris": 460,
+  "height": 2.35,
+  "radius": 1.82,
+  "lod1_tris": 120
+ },
+ "tree_d": {
+  "source": "CommonTree_1",
+  "tris": 518,
+  "height": 2.48,
+  "radius": 1.58,
+  "lod1_tris": 130
+ },
+ "palm_a": {
+  "source": "PalmTree_1",
+  "tris": 420,
+  "height": 4.47,
+  "radius": 1.62,
+  "lod1_tris": 112
+ },
+ "palm_b": {
+  "source": "PalmTree_4",
+  "tris": 378,
+  "height": 3.46,
+  "radius": 1.4,
+  "lod1_tris": 98
+ },
+ "banana": {
+  "source": "Plant_1",
+  "tris": 179,
+  "height": 0.5,
+  "radius": 0.6
+ },
+ "fern_a": {
+  "source": "Plant_3",
+  "tris": 140,
+  "height": 0.94,
+  "radius": 0.59
+ },
+ "fern_b": {
+  "source": "Plant_4",
+  "tris": 160,
+  "height": 0.8,
+  "radius": 1.13
+ },
+ "bush_a": {
+  "source": "Bush_1",
+  "tris": 150,
+  "height": 1.24,
+  "radius": 0.85
+ },
+ "bush_b": {
+  "source": "Bush_2",
+  "tris": 129,
+  "height": 1.1,
+  "radius": 0.67
+ },
+ "bush_berry": {
+  "source": "BushBerries_1",
+  "tris": 260,
+  "height": 1.28,
+  "radius": 0.87
+ },
+ "grass_tuft": {
+  "source": "Grass_3",
+  "tris": 64,
+  "height": 0.4,
+  "radius": 0.25
+ },
+ "tall_grass": {
+  "source": "Wheat",
+  "tris": 110,
+  "height": 1.05,
+  "radius": 0.18
+ },
+ "lily": {
+  "source": "Lilypad",
+  "tris": 148,
+  "height": 0.22,
+  "radius": 0.6
+ },
+ "rock_a": {
+  "source": "Rock_Moss_4",
+  "tris": 128,
+  "height": 0.78,
+  "radius": 0.63
+ },
+ "rock_b": {
+  "source": "Rock_Moss_6",
+  "tris": 116,
+  "height": 0.71,
+  "radius": 0.57
+ },
+ "rock_c": {
+  "source": "Rock_1",
+  "tris": 70,
+  "height": 0.88,
+  "radius": 0.24
+ },
+ "p_flower": {
+  "source": "Flowers",
+  "tris": 202,
+  "height": 0.83,
+  "radius": 0.3
+ },
+ "p_spike": {
+  "source": "Plant_5",
+  "tris": 240,
+  "height": 1.39,
+  "radius": 0.88
+ },
+ "p_corn": {
+  "source": "Corn_2",
+  "tris": 299,
+  "height": 1.98,
+  "radius": 0.41
+ },
+ "p_twig": {
+  "source": "Plant_2",
+  "tris": 160,
+  "height": 1.77,
+  "radius": 0.34
+ },
+ "p_log": {
+  "source": "WoodLog_Moss",
+  "tris": 258,
+  "height": 0.68,
+  "radius": 1.34
+ },
+ "p_stump": {
+  "source": "TreeStump",
+  "tris": 197,
+  "height": 0.62,
+  "radius": 0.68
+ },
+ "p_berry": {
+  "source": "BushBerries_2",
+  "tris": 258,
+  "height": 1.11,
+  "radius": 0.68
+ }
+}

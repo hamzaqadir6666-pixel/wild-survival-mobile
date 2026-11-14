@@ -1,0 +1,7 @@
+.godot/
+/android/
+*.apk
+*.aab
+*.translation
+preview_tmp/
+.cache/
