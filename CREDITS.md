@@ -159,6 +159,11 @@ https://sketchfab.com/3d-models/realistic-animated-elk-3d-model-787834f9caa2474d
 Changes (`tools/build_elk.py`): colour textures shrunk to 512 px, normal maps dropped, root motion removed from the clips,
 the vertical leap flattened out of the jump clip, 35 of the 53 clips kept and renamed. Game file: `assets/models/animals/elk.glb`.
 
+## Loading screen and icon
+
+The loading picture (`assets/ui/loading.jpg`, source `assets_src/art/loading.png`) and the app icon (`icon.png`, `assets/ui/icon_fg.png`, `assets/ui/icon_bg.png`, source `assets_src/art/icon.png`) are AI-generated pictures made for this project.
+The loading sound (`assets/audio/loading.wav`) and the ready chime (`assets/audio/ready.wav`) are built by `tools/build_loading.py` from the ambience recordings listed above plus synthesised tones.
+
 ## Music - Kevin MacLeod - CC BY 4.0
 
 | Game file | Title | Author | Link | Licence |

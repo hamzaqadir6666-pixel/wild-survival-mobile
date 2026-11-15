@@ -22,6 +22,13 @@ var minimap: Minimap
 var controls: TouchControls
 var menus: Menus
 var loading: Control
+var load_art: TextureRect
+var load_tip: Label
+var load_pct: Label
+var load_time := 0.0
+var load_shown := 0.0
+var load_tip_i := 0
+var load_tip_0 := randi() % 8
 var load_bar: ProgressBar
 var load_label: Label
 var ui_size_override := Vector2.ZERO     # tests set this to check other screen shapes
@@ -96,27 +103,106 @@ func _build_ui() -> void:
 	controls.pause_pressed.connect(pause)
 	menus = Menus.new(); menus.game = self
 	ui_root.add_child(menus)
-	loading = ColorRect.new()
-	(loading as ColorRect).color = Color(0.04, 0.08, 0.05)
+	_build_loading()
+
+const LOAD_TIPS := [
+	"A hunter that sees you will not give up. Get out of sight.",
+	"Deep water hides you from everything except crocodiles.",
+	"Safe thickets are marked on the map. No hunter follows you inside.",
+	"Sneak to move quietly. Sprinting is loud and drains stamina.",
+	"When the water bar is empty you have 30 seconds to drink.",
+	"Stand still for a while and the elk rests. Resting refills stamina faster.",
+	"Rare plants give abilities that stay with you between levels.",
+	"Listen: the music changes the moment a hunter charges.",
+]
+
+## Loading screen: painted key art that slowly drifts, the title, a tip that changes, a slim bar with its percentage.
+func _build_loading() -> void:
+	loading = Control.new()
 	loading.set_anchors_preset(Control.PRESET_FULL_RECT)
+	loading.clip_contents = true
 	ui_root.add_child(loading)
-	var cc := CenterContainer.new()
-	cc.set_anchors_preset(Control.PRESET_FULL_RECT)
-	loading.add_child(cc)
+	var back := ColorRect.new()
+	back.color = Color(0.03, 0.05, 0.04)
+	back.set_anchors_preset(Control.PRESET_FULL_RECT)
+	loading.add_child(back)
+	load_art = TextureRect.new()
+	load_art.texture = load("res://assets/ui/loading.jpg")
+	load_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	load_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	load_art.set_anchors_preset(Control.PRESET_FULL_RECT)
+	loading.add_child(load_art)
+	# dark fade over the lower half so the text is always readable
+	var grad := Gradient.new()
+	grad.set_color(0, Color(0, 0, 0, 0.0)); grad.set_color(1, Color(0.01, 0.03, 0.02, 0.92))
+	grad.set_offset(0, 0.42); grad.set_offset(1, 0.97)
+	var gt := GradientTexture2D.new()
+	gt.gradient = grad; gt.fill_from = Vector2(0, 0); gt.fill_to = Vector2(0, 1); gt.width = 8; gt.height = 128
+	var shade := TextureRect.new()
+	shade.texture = gt
+	shade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shade.stretch_mode = TextureRect.STRETCH_SCALE
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	loading.add_child(shade)
+	var m := MarginContainer.new()
+	m.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for side in ["left", "right"]: m.add_theme_constant_override("margin_" + side, 70)
+	m.add_theme_constant_override("margin_bottom", 44)
+	loading.add_child(m)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 14)
-	cc.add_child(v)
-	var t := UI.label("WILD SURVIVAL", 44, UI.GOLD); t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.alignment = BoxContainer.ALIGNMENT_END
+	v.add_theme_constant_override("separation", 6)
+	m.add_child(v)
+	var t := UI.label("WILD SURVIVAL", 68, UI.GOLD)
+	t.add_theme_constant_override("outline_size", 14)
+	t.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.0, 0.9))
+	t.add_theme_constant_override("shadow_offset_y", 5)
+	t.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
 	v.add_child(t)
-	load_label = UI.label("Loading...", 20); load_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(load_label)
+	var sub := UI.label("Stay alert.  Stay hidden.  Stay alive.", 20, Color(0.92, 0.95, 0.88))
+	v.add_child(sub)
+	var gap := Control.new(); gap.custom_minimum_size = Vector2(0, 18)
+	v.add_child(gap)
+	load_tip = UI.label("Tip: " + LOAD_TIPS[randi() % LOAD_TIPS.size()], 17, Color(1.0, 0.93, 0.7))
+	v.add_child(load_tip)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	v.add_child(row)
+	load_label = UI.label("Loading...", 16, Color(0.85, 0.9, 0.85))
+	load_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(load_label)
+	load_pct = UI.label("0%", 16, UI.GOLD)
+	row.add_child(load_pct)
 	load_bar = ProgressBar.new()
-	load_bar.custom_minimum_size = Vector2(460, 26)
+	load_bar.custom_minimum_size = Vector2(0, 12)
 	load_bar.max_value = 100.0
 	load_bar.show_percentage = false
-	load_bar.add_theme_stylebox_override("background", UI.box(Color(0, 0, 0, 0.7), 8, 2))
-	load_bar.add_theme_stylebox_override("fill", UI.box(Color(0.45, 0.8, 0.35), 8, 2))
+	load_bar.add_theme_stylebox_override("background", UI.box(Color(0, 0, 0, 0.65), 6, 0))
+	load_bar.add_theme_stylebox_override("fill", UI.box(Color(1.0, 0.78, 0.25), 6, 0))
 	v.add_child(load_bar)
+	Sfx.set_loop("loading", 0.9)
+
+## drift of the picture, tip rotation, smooth bar; called every frame while the loading screen is up
+func _loading_anim(dt: float) -> void:
+	load_time += dt
+	load_art.pivot_offset = load_art.size * Vector2(0.62, 0.45)
+	var z := 1.0 + 0.06 * minf(load_time / 12.0, 1.0) + 0.012 * sin(load_time * 0.5)
+	load_art.scale = Vector2(z, z)
+	load_shown = move_toward(load_shown, load_bar.value, dt * 90.0)
+	load_pct.text = "%d%%" % int(load_shown)
+	if int(load_time / 3.5) != load_tip_i:
+		load_tip_i = int(load_time / 3.5)
+		load_tip.text = "Tip: " + LOAD_TIPS[(load_tip_i + load_tip_0) % LOAD_TIPS.size()]
+
+## loading done: chime, then the picture fades away over the menu
+func _finish_loading() -> void:
+	Sfx.set_loop("loading", 0.0)
+	Sfx.play("ready", 0.8)
+	load_pct.text = "100%"
+	loading.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tw := create_tween()
+	tw.tween_property(loading, "modulate:a", 0.0, 0.7)
+	tw.tween_callback(func(): loading.visible = false)
 
 ## canvas size and safe area (notch, rounded corners) in canvas units
 func _layout() -> void:
@@ -214,7 +300,7 @@ func _loading_step() -> void:
 			_load_step = 9
 		9:
 			state = MENU
-			loading.visible = false
+			_finish_loading()
 			sky.reset(9.0)
 			apply_quality()
 			Sfx.start_music()
@@ -347,6 +433,8 @@ func _process(delta: float) -> void:
 	_frame += 1
 	if state == LOADING:
 		_loading_step()
+		if state == LOADING:
+			_loading_anim(delta)
 		return
 	var dt := minf(delta, 0.1)
 	if state == MENU:

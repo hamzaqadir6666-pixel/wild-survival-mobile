@@ -886,6 +886,12 @@ func _tests_hunter() -> void:
 	var has_choose := false
 	for bt in g.menus.find_children("*", "Button", true, false):
 		if (bt as Button).text.contains("Choose animal"): has_choose = true
+	var art_tex: Texture2D = g.load_art.texture
+	check("loading screen: painted artwork, title, tip, percentage and a bar", art_tex != null and art_tex.get_width() == 1280 and g.load_tip.text.begins_with("Tip: ") and g.load_pct.text == "100%" and g.LOAD_TIPS.size() >= 6)
+	check("loading screen fades away when the game is ready", not g.loading.visible or g.loading.modulate.a < 0.05)
+	check("loading sound: a loop while loading and a chime when ready", Sfx.loops.has("loading") and Sfx.streams.has("ready") and float(Sfx.loop_target["loading"]) == 0.0)
+	var icon_tex: Texture2D = load("res://icon.png")
+	check("app icon is the 512 px elk artwork", icon_tex.get_width() == 512 and icon_tex.get_height() == 512)
 	var has_exit := false
 	for bt in g.menus.find_children("*", "Button", true, false):
 		if (bt as Button).text.contains("Exit game"): has_exit = true

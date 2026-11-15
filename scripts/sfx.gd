@@ -2,10 +2,10 @@ extends Node
 ## Sound: music, layered ambience loops and a small pool of one-shot players.
 ## No 3D audio nodes are used; distance volume is computed by hand (cheap on phones).
 
-const ONE_SHOTS := ["growl", "roar", "snarl", "howl", "laugh", "hiss", "grunt", "bleat", "moo", "rooster", "crow", "eat", "drink", "click", "thud",
+const ONE_SHOTS := ["ready", "growl", "roar", "snarl", "howl", "laugh", "hiss", "grunt", "bleat", "moo", "rooster", "crow", "eat", "drink", "click", "thud",
 	"thunder1", "thunder2", "step1", "step2", "step3", "step4", "splash1", "splash2", "splash3"]
-const LOOPS := ["amb_day", "amb_night", "amb_water", "amb_rain", "amb_wind", "chase", "heartbeat"]
-const LOOP_BUS := {"chase": "Music", "heartbeat": "SFX"}      # everything else: Ambience
+const LOOPS := ["amb_day", "amb_night", "amb_water", "amb_rain", "amb_wind", "chase", "heartbeat", "loading"]
+const LOOP_BUS := {"chase": "Music", "heartbeat": "SFX", "loading": "Music"}      # everything else: Ambience
 var music_duck := 0.0      # 0..1, the calm music makes room for the chase music
 var streams := {}
 var pool: Array[AudioStreamPlayer] = []
