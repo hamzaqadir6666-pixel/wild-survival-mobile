@@ -15,10 +15,25 @@ installation framework: two small Win32 executables cross-compiled from C++17.
 > SmartScreen will warn because the binaries are not code-signed: **More info → Run anyway**,
 > or verify the SHA-256 first.
 
-**Direct download links (GitHub):**
+**Direct download links (GitHub, no login needed):**
 
-| Artifact | Link |
+| Artifact | Direct link |
 | --- | --- |
+| **Portable ZIP** (Explorer + Uninstaller + README) | <https://codeload.github.com/hamzaqadir6666-pixel/wild-survival-mobile/zip/refs/heads/arena/98e7797b-wild-survival-mobile> |
+| Setup wizard | <https://api.github.com/repos/hamzaqadir6666-pixel/wild-survival-mobile/contents/releases/AeroExplorerSetup.exe?ref=arena/98e7797b-wild-survival-mobile> |
+| Portable EXE | <https://api.github.com/repos/hamzaqadir6666-pixel/wild-survival-mobile/contents/releases/AeroExplorer.exe?ref=arena/98e7797b-wild-survival-mobile> |
+| Uninstaller | <https://api.github.com/repos/hamzaqadir6666-pixel/wild-survival-mobile/contents/releases/Uninstall.exe?ref=arena/98e7797b-wild-survival-mobile> |
+
+`codeload` returns `application/zip` straight away (the repo branch archive, which contains the
+`releases/` folder with both executables and `AeroExplorer-portable.zip`). The `api.github.com`
+content links return the raw binary; visit them in a browser and the file downloads, or use
+`curl -L -H "Accept: application/vnd.github.raw" -o file.exe "<link>"`.
+
+In the browser you can equally click **Code → Download ZIP** on the repository page, or open
+<https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/AeroExplorer-portable.zip?raw=true>
+and press **Download**.
+
+--- | --- |
 | Portable ZIP | <https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/AeroExplorer-portable.zip?raw=true> |
 | Setup wizard | <https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/AeroExplorerSetup.exe?raw=true> |
 | Portable EXE | <https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/AeroExplorer.exe?raw=true> |
