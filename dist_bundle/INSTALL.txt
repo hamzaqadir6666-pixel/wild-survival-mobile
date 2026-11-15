@@ -1,0 +1,43 @@
+Windows 7 Aero Explorer 1.0.0 (Windows 10 / 11, 64-bit)
+=======================================================
+
+WHAT'S IN THIS ZIP
+------------------
+  AeroExplorerSetup.exe   <- RECOMMENDED. Windows 7 style setup wizard.
+                             Installs the app, shortcuts, folder context menu and
+                             ftp:// handler, and adds an Apps & Features entry.
+  AeroExplorer.exe        Portable build. Just double-click it. No install needed.
+  Uninstall.exe           Standalone uninstaller (Setup also installs one).
+  README.md               Full documentation (features, FTP usage, build steps).
+  SHA256SUMS.txt          Checksums - verify with:  certutil -hashfile <file> SHA256
+
+QUICK START
+-----------
+  1. Right-click AeroExplorerSetup.exe -> Run as administrator
+     (or just double-click; Windows will prompt for elevation).
+  2. Welcome -> I accept the license -> choose install folder -> pick shortcuts
+     -> Install -> Finish.
+  3. If Windows SmartScreen appears, click "More info" then "Run anyway".
+     The binaries are unsigned; that warning is expected.
+
+SILENT INSTALL
+--------------
+  AeroExplorerSetup.exe /S
+  AeroExplorerSetup.exe /S /DIR="D:\Apps\AeroExplorer" /NODESKTOPSHORTCUT /NOLAUNCH
+
+FTP IN 30 SECONDS
+-----------------
+  * Press Ctrl+K and enter host / user / password, or
+  * type ftp://user:password@host:21/path in the address bar, or
+  * click FTP (command bar) -> "Connect to public test server".
+  Drag files from Windows Explorer onto a remote folder to upload them.
+
+UNINSTALL
+---------
+  Apps & Features -> Windows 7 Aero Explorer -> Uninstall
+  or run Uninstall.exe from the install folder.
+
+REQUIREMENTS
+------------
+  Windows 10 or Windows 11, 64-bit. No runtime, no .NET, no installer framework
+  needed beyond the executable in this zip.

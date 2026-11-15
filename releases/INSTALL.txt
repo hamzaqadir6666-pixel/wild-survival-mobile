@@ -1,0 +1,33 @@
+Windows 7 Aero Explorer 1.0.0 (Windows 10 / 11, 64-bit)
+=======================================================
+
+WHAT'S IN THIS FOLDER
+---------------------
+  AeroExplorerSetup.exe   <- RECOMMENDED. Windows 7 style setup wizard.
+  AeroExplorer.exe        Portable build (double-click, no install).
+  Uninstall.exe           Standalone uninstaller.
+  README.md               Full documentation.
+  SHA256SUMS.txt          Checksums (certutil -hashfile <file> SHA256).
+  AeroExplorer-v1.0.0-win64.zip   Everything above in one download.
+
+QUICK START
+-----------
+  1. Double-click AeroExplorerSetup.exe (Windows prompts for elevation).
+  2. Walk the wizard: Welcome -> License -> Install folder -> Components ->
+     Install -> Finish.
+  3. If SmartScreen appears, choose "More info" -> "Run anyway" (unsigned binary).
+
+SILENT INSTALL
+--------------
+  AeroExplorerSetup.exe /S
+  AeroExplorerSetup.exe /S /DIR="D:\Apps\AeroExplorer" /NODESKTOPSHORTCUT /NOLAUNCH
+
+FTP
+---
+  Ctrl+K opens the FTP Connection Manager; or type
+  ftp://user:password@host:21/path in the address bar. Drag files onto a remote
+  folder to upload.
+
+UNINSTALL
+---------
+  Apps & Features -> Windows 7 Aero Explorer -> Uninstall

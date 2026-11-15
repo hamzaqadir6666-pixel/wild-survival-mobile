@@ -12,6 +12,8 @@ installation framework: two small Win32 executables cross-compiled from C++17.
 | Portable bundle | [`releases/AeroExplorer-portable.zip`](releases/AeroExplorer-portable.zip) | ~0.7 MB | Explorer + Uninstaller + this README |
 | Checksums | [`releases/SHA256SUMS.txt`](releases/SHA256SUMS.txt) | — | SHA-256 of every artifact |
 
+> **Everything in one ZIP:** `releases/AeroExplorer-v1.0.0-win64.zip` (setup + portable + uninstaller + README + INSTALL.txt, ~1.8 MB).
+
 > SmartScreen will warn because the binaries are not code-signed: **More info → Run anyway**,
 > or verify the SHA-256 first.
 

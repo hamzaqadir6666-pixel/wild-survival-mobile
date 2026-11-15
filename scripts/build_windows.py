@@ -284,9 +284,27 @@ def main() -> int:
         if readme.exists():
             zf.write(readme, "AeroExplorer/README.md")
 
+    log("Writing the all-in-one release ZIP")
+    bundle = RELEASES / "AeroExplorer-v1.0.0-win64.zip"
+    install_txt = RELEASES / "INSTALL.txt"
+    if not install_txt.exists():
+        install_txt.write_text(
+            "Windows 7 Aero Explorer 1.0.0 (Windows 10/11 x64)\n"
+            "Run AeroExplorerSetup.exe to install, or AeroExplorer.exe for the portable build.\n",
+            encoding="utf-8",
+        )
+    with zipfile.ZipFile(bundle, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+        for name in ("AeroExplorerSetup.exe", "AeroExplorer.exe", "Uninstall.exe"):
+            zf.write(RELEASES / name, name)
+        readme = ROOT / "README.md"
+        if readme.exists():
+            zf.write(readme, "README.md")
+        zf.write(install_txt, "INSTALL.txt")
+        zf.write(RELEASES / "SHA256SUMS.txt", "SHA256SUMS.txt")
+
     log("Writing checksums")
     lines = []
-    for artifact in (explorer_exe, uninstall_exe, setup_exe, portable):
+    for artifact in (explorer_exe, uninstall_exe, setup_exe, portable, bundle):
         lines.append(f"{sha256_of(artifact)}  {artifact.name}")
     (RELEASES / "SHA256SUMS.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -298,6 +316,7 @@ def main() -> int:
         print(f"  {path.name:<26} {info['size']:>10,} bytes   x64 GUI PE32+"
               f"   icons={info['icon_count']}  manifest={'yes' if info['has_manifest'] else 'no'}")
     print(f"  {portable.name:<26} {portable.stat().st_size:>10,} bytes")
+    print(f"  {bundle.name:<26} {bundle.stat().st_size:>10,} bytes")
     print(f"  embedded payload           {len(embedded):>10,} bytes ({count} entries)")
     print("  " + "-" * 68)
     for line in lines:
