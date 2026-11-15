@@ -303,7 +303,7 @@ func _tests() -> void:
 	check("hunter that gave up walks home (return state)", lion.state == Predator.RETURN or lion.state == Predator.REST or lion.state == Predator.PATROL, Predator.STATE_NAMES[lion.state])
 	_quiet()
 
-	# ---------------- lion gives up after a short chase
+	# ---------------- a lion that loses sight of a fast deer stops chasing and searches
 	_place(690, 380)           # East Lawn
 	var l2: Predator = g.fauna._make_predator("lion", Vector2(690, 398))
 	l2.pack = [l2]
@@ -314,12 +314,13 @@ func _tests() -> void:
 	g.cam_yaw = 0.0
 	var t_chase := 0.0
 	var t0: float = g.run_time
-	for i in 6000:
+	for i in 9000:
 		await get_tree().process_frame
+		p.stamina = p.max_stamina
 		if l2.state != Predator.CHASE and l2.state != Predator.ATTACK:
 			t_chase = g.run_time - t0; break
 	c.move = Vector2.ZERO; c.sprint = false
-	check("lion gives up after a short chase", t_chase > 2.0 and t_chase < 12.0, "(%.1f s)" % t_chase)
+	check("a lion left far behind loses sight and searches instead of chasing", t_chase > 2.0 and l2.dist_to(p.position) > 30.0, "(%.1f s, %.0f m)" % [t_chase, l2.dist_to(p.position)])
 	Save.d.abilities = {}; p.refresh_abilities()
 	_quiet()
 
@@ -401,7 +402,7 @@ func _tests() -> void:
 	p.health = p.max_health
 	var ch: Predator = g.fauna._make_predator("cheetah", Vector2(400, 548)); ch.pack = [ch]
 	check("cheetah is the fastest hunter and faster than the deer", ch.cfg.run > D.SPECIES.lion.run and ch.cfg.run > D.SPECIES.deer.run * 1.255)
-	check("cheetah gives up sooner than a wolf pack", ch.cfg.chase < D.SPECIES.wolf.chase and D.SPECIES.hyena.chase > D.SPECIES.lion.chase)
+	check("cheetah gives up sooner than a wolf pack", ch.cfg.chase < D.SPECIES.wolf.chase and D.SPECIES.hyena.chase > D.SPECIES.lion.chase)  # chase = seconds before it tires
 	_quiet()
 	# crocodile at the water's edge
 	var cs: Array = World.info.crocs[0]
@@ -745,6 +746,87 @@ func _tests_hunter() -> void:
 	var tuft_tris: int = g.grass.multimesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size() / 3
 	var per_m2: float = tufts / (PI * g.grass._radius * g.grass._radius)
 	check("grass is dense: at least one tuft for every 2 square metres of meadow", per_m2 > 0.5 and tuft_tris <= 12, "(%d tufts, %.2f per m2, %d tris each)" % [tufts, per_m2, tuft_tris])
+	# ---------------- hunters do not give up while they can see you
+	_place(400, 520)
+	var dogged: Predator = g.fauna._make_predator("lion", Vector2(418, 520))
+	dogged.pack = [dogged]
+	dogged.last_seen = p.pos2()
+	dogged.engage()
+	var still := true
+	var t1: float = g.run_time
+	while g.run_time - t1 < 26.0:
+		await get_tree().process_frame
+		p.health = p.max_health
+		if dogged.state != Predator.CHASE and dogged.state != Predator.ATTACK: still = false; break
+	check("a lion that can see you is still after you 26 s later (it used to quit after 7 s)", still, Predator.STATE_NAMES[dogged.state])
+	# ... until you hide in a bush
+	var bush := Vector2.ZERO
+	for key in World.bush_grid:
+		var arr: PackedFloat32Array = World.bush_grid[key]
+		var q := Vector2(arr[0], arr[1])
+		if arr[2] > 1.2 and World.thicket_at(q.x, q.y, 25.0) < 0 and World.height(q.x, q.y) > 0.5 and World.playable(q.x + 20.0, q.y) and World.height(q.x + 20.0, q.y) > 0.5:
+			bush = q; break
+	_quiet()
+	_place(bush.x + 5.0, bush.y)
+	await frames(8)
+	var open_ok: bool = not p.hidden and g.hud.status_text == ""
+	var seeker: Predator = g.fauna._make_predator("lion", Vector2(bush.x + 20.0, bush.y))
+	seeker.pack = [seeker]
+	seeker.last_seen = p.pos2()
+	seeker.engage()
+	_place(bush.x, bush.y)
+	var lost := false
+	var shown := false
+	for i in 400:
+		await get_tree().process_frame
+		_place(bush.x, bush.y)
+		p.health = p.max_health
+		if g.hud.status_text == "HIDDEN": shown = true
+		if seeker.state != Predator.CHASE and seeker.state != Predator.ATTACK and seeker.state != Predator.STALK: lost = true; break
+	check("standing inside a bush hides you: green HIDDEN text appears", open_ok and p.hidden and p.hide_kind == 1 and shown, "(bush at %.0f, %.0f)" % [bush.x, bush.y])
+	check("the hunter loses a deer hidden in a bush and leaves", lost, Predator.STATE_NAMES[seeker.state])
+	_quiet()
+	# ... or swim into deep water
+	var deep := Vector2.ZERO
+	for i in 16000:
+		var q2 := Vector2(40 + (i % 126) * 7.5, 40 + (i / 126) * 7.5)
+		if World.height(q2.x, q2.y) < -p.swim_depth - 0.6 and World.playable(q2.x, q2.y):
+			deep = q2; break
+	var shore: Vector2 = World.dry_near(g._rng, deep, 10.0, 40.0)
+	_place(deep.x, deep.y)
+	await frames(8)
+	var swim_hunter: Predator = g.fauna._make_predator("lion", shore)
+	swim_hunter.pack = [swim_hunter]
+	swim_hunter.last_seen = p.pos2()
+	swim_hunter.engage()
+	var lost2 := false
+	for i in 500:
+		await get_tree().process_frame
+		_place(deep.x, deep.y)
+		if swim_hunter.state != Predator.CHASE and swim_hunter.state != Predator.ATTACK and swim_hunter.state != Predator.STALK: lost2 = true; break
+	var croc2: Predator = g.fauna._make_predator("crocodile", shore)
+	check("swimming in deep water hides you from a lion but not from a crocodile", p.in_water and lost2 and swim_hunter.cant_see(p) and not croc2.cant_see(p) and g.hud.status_text == "HIDDEN IN WATER", "(%s)" % g.hud.status_text)
+	_quiet()
+	# ---------------- thirst: 30 seconds to drink
+	_place(400, 520)
+	keep_alive = false
+	p.health = p.max_health; p.food = 100.0
+	p.water = 0.0
+	await secs(3.0)
+	check("empty water bar starts a 30 s countdown and does not hurt yet", p.alive and p.health >= p.max_health - 0.01 and p.thirst_left > 25.0 and p.thirst_left < 28.0 and g.hud.thirst_text.begins_with("DRINK WATER"), "(%.1f s left, '%s')" % [p.thirst_left, g.hud.thirst_text])
+	p.water = 30.0
+	await frames(8)
+	check("drinking cancels the countdown", p.thirst_left == 0.0 and g.hud.thirst_text == "")
+	p.water = 0.0
+	await frames(3)
+	p.thirst_left = 0.3
+	await secs(1.0)
+	check("after 30 s without water the animal dies of thirst", not p.alive and p.cause == "Thirst", p.cause)
+	g.start_level(0)
+	keep_alive = true
+	await frames(3)
+	_quiet()
+	check("the bars are drawn with their numbers", g.hud.has_method("_bar_n"))
 	# ---------------- clock
 	g.sky.hour = 10.0
 	var h0: float = g.sky.hour

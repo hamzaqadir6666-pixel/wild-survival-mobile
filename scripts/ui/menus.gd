@@ -14,7 +14,7 @@ const HOWTO := [
 	["leaf", "Keep four bars up: health, stamina, food and water. Stand on grass and press the leaf button to graze, stand at a shore to drink."],
 	["eye", "Hunters find you by sight, sound and distance. SAFE: nobody knows. WATCHED: something noticed you. HUNTED: run!"],
 	["sneak", "SNEAK makes you quiet and hard to see. Thick bushes marked on the map are safe thickets - no hunter follows you inside."],
-	["wave", "Deep water stops most hunters, but crocodiles wait at the water's edge. Each hunter gives up after its own time."],
+	["wave", "A hunter that sees you does not give up: get out of sight. Swim into deep water (crocodiles still see you) or stand inside a bush until HIDDEN appears."],
 	["clover", "Glowing rare plants give permanent abilities: speed, night vision, health, stamina, silent steps and more. Red toadstools are poison."],
 	["flag", "Finish the goals at the top of the screen to complete a level. Find landmarks and thickets for bonuses."],
 ]

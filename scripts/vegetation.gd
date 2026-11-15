@@ -17,6 +17,8 @@ const TYPES := {
 	"dead_a": [0, 1.0, 0.07], "dead_b": [0, 1.0, 0.05], "dead_c": [0, 1.0, 0.07], "bush_c": [1, 1.0, 0.0], "bush_d": [1, 1.0, 0.0],
 	"fern_a": [2, 1.0, 0.0], "fern_b": [2, 1.0, 0.0], "tall_grass": [2, 2.4, 0.0], "lily": [2, 1.0, 0.0],
 }
+# bushes the player can hide in -> leaf radius per unit scale
+const HIDE_IN := {"bush_a": 0.8, "bush_b": 0.7, "bush_c": 0.8, "bush_d": 0.7, "bush_berry": 0.8, "banana": 0.35}
 var material: ShaderMaterial
 var meshes := {}
 var lod_meshes := {}
@@ -100,6 +102,7 @@ func _build_group() -> void:
 		var b := Basis(Vector3.UP, rot).scaled(Vector3(sc * cfg[1], sc, sc * cfg[1]))
 		xf.append(Transform3D(b, Vector3(x, y, z)))
 		if cfg[2] > 0.0: World.add_tree(x, z, cfg[2] * sc)
+		elif HIDE_IN.has(tname): World.add_bush(x, z, float(HIDE_IN[tname]) * sc)
 		_pos += 1
 	var cx := (ck % 16) * 64.0 + 32.0
 	var cz := (ck / 16) * 64.0 + 32.0

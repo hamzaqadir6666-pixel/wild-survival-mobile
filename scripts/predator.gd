@@ -13,6 +13,7 @@ var on_deer := false               # current target is the player
 var aware := 0.0                   # 0..1 suspicion of the deer
 var last_seen := Vector2.ZERO
 var unseen := 0.0
+var blocked := 0.0
 var chase_time := 0.0
 var tired := 0.0
 var hunger := 30.0
@@ -58,6 +59,7 @@ func set_state(s: int) -> void:
 		CHASE:
 			chase_time = 0.0
 			unseen = 0.0
+			blocked = 0.0
 
 func _patrol_point() -> Vector2:
 	if style == "water":
@@ -75,9 +77,17 @@ func can_enter(x: float, z: float) -> bool:
 	return h > -0.45
 
 ## deer sensing: sight (cone, shorter when the deer sneaks, at night or in rain) and hearing
+## the player is out of this hunter's sight: in a safe thicket, deep inside a bush (unless the hunter
+## is right on top of it), or swimming where a land hunter cannot follow
+func cant_see(deer: Animal) -> bool:
+	if deer.hide_kind == 2: return true
+	# a bush only works with a head start: a hunter within 4 m when you slip in has seen where you went
+	if deer.hide_kind == 1: return unseen > 0.0 or dist_to(deer.position) > 4.0
+	return deer.in_water and style != "water"
+
 func senses_deer() -> bool:
 	var deer: Player = fauna.deer
-	if deer == null or not deer.alive or deer.hidden: return false
+	if deer == null or not deer.alive or cant_see(deer): return false
 	var d := dist_to(deer.position)
 	if style == "water":
 		return d < cfg.sight and World.height(deer.position.x, deer.position.z) < 0.7
@@ -185,7 +195,7 @@ func _begin_stalk() -> void:
 func _stalk(delta: float, sensed: bool) -> void:
 	var deer: Player = fauna.deer
 	var d := dist_to(deer.position)
-	if not deer.alive or aware <= 0.05 or (deer.hidden and unseen > 2.0):
+	if not deer.alive or aware <= 0.05 or (cant_see(deer) and unseen > 2.0):
 		on_deer = false
 		target = null
 		aware = 0.0
@@ -226,10 +236,15 @@ func _chase(delta: float) -> void:
 	var d := pos2().distance_to(tp)
 	if on_deer:
 		var deer := target
-		if deer.hidden:
+		if cant_see(deer):
+			# it hid: the hunter searches for a moment, then leaves
 			unseen += delta
-			if unseen > 1.5:
+			if unseen > (3.0 if deer.in_water else 1.5):
 				give_up(8.0); return
+			# slows to a walk and noses around where it last saw you
+			if pos2().distance_to(last_seen) > 2.5: _go(last_seen, float(cfg.walk) * 1.6, delta)
+			else: _hold(deer, delta)
+			return
 		elif d > float(cfg.sight) * 1.6:
 			unseen += delta
 			if unseen > cfg.memory:
@@ -240,14 +255,15 @@ func _chase(delta: float) -> void:
 		else:
 			unseen = 0.0
 			last_seen = tp
-		if chase_time > cfg.chase:
-			give_up(14.0 if style == "sprint" else 9.0); return
 		if style == "water" and pos2().distance_to(home) > 16.0:
 			give_up(5.0); return
 	elif chase_time > 9.0 or d > 60.0:
 		hunger = 30.0
 		give_up(3.0); return
 	var spd: float = cfg.run
+	# a hunter no longer gives up while it can see its prey, but it tires: after its best
+	# effort (cfg.chase seconds) it slows down, which is the chance to get out of sight
+	if on_deer and chase_time > float(cfg.chase): spd *= lerpf(1.0, 0.8, clampf((chase_time - float(cfg.chase)) / 6.0, 0.0, 1.0))
 	if style == "stalk" and chase_time < 1.6: spd *= 1.3          # the pounce
 	if style == "pack_circle" and on_deer and pack.size() > 1:
 		# circle the deer; one pack member at a time darts in
@@ -262,8 +278,10 @@ func _chase(delta: float) -> void:
 	var before := pos2()
 	_go(tp, spd, delta)
 	if speed == 0.0 and before.distance_to(pos2()) < 0.01:
-		# blocked (water or a safe thicket): pace and lose interest faster
-		chase_time += delta * 1.5
+		# blocked by something it cannot cross: pace, and leave if that lasts
+		blocked += delta
+		if blocked > 5.0:
+			give_up(6.0); return
 		face(tp - pos2(), delta, 6.0)
 		play("idle")
 
@@ -288,7 +306,7 @@ func _attack(delta: float) -> void:
 		hit_done = true
 		if valid and target.alive and dist_to(target.position) < contact + 0.9:
 			if on_deer:
-				if not target.hidden: fauna.hit_deer(self, cfg.dmg)
+				if target.hide_kind != 2: fauna.hit_deer(self, cfg.dmg)
 			else:
 				(target as Prey).kill()
 				fauna.animal_sound(self, "thud", 1.0, 0.7)

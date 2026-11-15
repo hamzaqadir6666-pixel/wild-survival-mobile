@@ -41,6 +41,13 @@ a single light mesh (9 triangles per tuft).
 Predators lunge: once in reach they keep closing in until their jaws touch the target, and only then does the bite
 land. Animals without a bite clip (the 0 A.D. cats and the crocodile) pounce with a crouch-leap-strike pose instead.
 
+A hunter that can see you no longer gives up after a few seconds: it tires and slows a little, but it keeps coming
+until you are out of sight. Ways to hide: a safe thicket, the inside of any bush (green **HIDDEN** text; needs a head
+start of about 4 m), or deep water (**HIDDEN IN WATER**; crocodiles still see you). Outrunning it far enough also works.
+
+Every bar shows its number (for example `74 / 100`). An empty water bar starts a 30 second countdown
+(**DRINK WATER! 27 s**) instead of hurting at once; drinking cancels it, and at zero the animal dies of thirst.
+
 When a hunter charges you, the calm music fades out, a chase loop starts and a heartbeat gets faster the closer the
 hunter is. Both loops are synthesised by `tools/build_chase_audio.py`.
 
@@ -79,7 +86,7 @@ All tests start the real game scene and drive it (no display or GPU needed):
 
 ```
 godot --headless --path . --import          # once
-godot --headless --path . -- --test         # 139 feature checks, exit code 0 = all passed
+godot --headless --path . -- --test         # 147 feature checks, exit code 0 = all passed
 godot --headless --path . -- --test-perf    # draw-call / triangle budget at 24 view points per preset
 godot --headless --path . -- --soak=600     # a bot plays for 600 s and prints memory, objects, orphan nodes
 ```

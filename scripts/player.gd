@@ -19,6 +19,8 @@ var vy := 0.0
 var air := 0.0                 # height above the ground while jumping
 var swimming := false
 var sprinting := false
+const THIRST_TIME := 30.0
+var thirst_left := 0.0          # seconds left to drink once the water bar is empty (0 = not counting)
 var action := ""               # "", "graze", "drink"
 var action_time := 0.0
 var poison := 0.0
@@ -71,7 +73,7 @@ func reset_run(at: Vector2) -> void:
 	alive = true
 	cause = ""
 	refresh_abilities()
-	health = max_health; stamina = max_stamina; food = 100.0; water = 100.0
+	health = max_health; stamina = max_stamina; food = 100.0; water = 100.0; thirst_left = 0.0
 	poison = 0.0; vy = 0.0; air = 0.0; action = ""; exhausted = false; regen_block = 0.0
 	distance_walked = 0.0
 	_warn_food = false; _warn_water = false
@@ -154,8 +156,14 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 		health -= 1.6 * delta
 		if health <= 0.0: health = 0.0; die("Starvation"); return
 	if water <= 0.0:
-		health -= 2.0 * delta
-		if health <= 0.0: health = 0.0; die("Thirst"); return
+		# an empty water bar starts a 30 second countdown instead of hurting at once
+		if thirst_left <= 0.0:
+			thirst_left = THIRST_TIME
+			note.emit("Water is empty! Drink within %d seconds." % int(THIRST_TIME), 2)
+		thirst_left -= delta
+		if thirst_left <= 0.0:
+			thirst_left = 0.0; health = 0.0; die("Thirst"); return
+	else: thirst_left = 0.0
 	if poison > 0.0:
 		poison -= delta
 		health -= 4.0 * delta
@@ -227,7 +235,8 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 	splash.emitting = (in_water and speed > 0.5 and air <= 0.0) or (ground < -0.05 and ground >= -swim_depth and speed > 2.5 and air <= 0.0)
 	splash.position.y = (-position.y) + 0.05 if ground < 0.0 else 0.0
 	if blob: blob.visible = not in_water and air < 2.5
-	hidden = World.thicket_at(position.x, position.z) >= 0
+	hide_kind = 2 if World.thicket_at(position.x, position.z) >= 0 else (1 if air <= 0.0 and not in_water and World.bush_at(position.x, position.z) else 0)
+	hidden = hide_kind > 0
 	# ---- noise heard by hunters ----
 	if has("ghostfern"): noise = 0.0
 	elif speed < 0.3: noise = 0.0

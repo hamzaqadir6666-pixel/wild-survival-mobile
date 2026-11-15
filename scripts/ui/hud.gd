@@ -16,6 +16,8 @@ var rects := {}
 var notes: Array = []            # {text, kind, age}
 var flash := 0.0
 var hint := ""
+var status_text := ""          # what the green status line says right now
+var thirst_text := ""
 var _acc := 0.0
 var _font: Font
 
@@ -75,6 +77,11 @@ func _bar(r: Rect2, frac: float, col: Color, icon_name: String, low: bool) -> vo
 	draw_rect(Rect2(b.position + Vector2(2, 2), Vector2((b.size.x - 4) * clampf(frac, 0.0, 1.0), b.size.y - 4)), c)
 	draw_rect(b, Color(1, 1, 1, 0.35), false, 1.0)
 
+## bar with its number, e.g. "74 / 100"
+func _bar_n(r: Rect2, value: float, full: float, col: Color, icon_name: String, low: bool) -> void:
+	_bar(r, value / full, col, icon_name, low)
+	_text(Vector2(r.position.x + 28, r.position.y + r.size.y * 0.5 + 5.0), "%d / %d" % [int(ceil(value)), int(round(full))], 13, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 28)
+
 func _draw() -> void:
 	if game == null or game.player == null or rects.is_empty(): return
 	var p: Player = game.player
@@ -83,10 +90,10 @@ func _draw() -> void:
 	var rb: Rect2 = rects.bars
 	draw_style_box(_panel, rb)
 	var row := (rb.size.y - 12.0) / 4.0
-	_bar(Rect2(rb.position + Vector2(8, 6), Vector2(rb.size.x - 16, row)), p.health / p.max_health, Color(0.9, 0.25, 0.22), "heart", p.health < p.max_health * 0.3)
-	_bar(Rect2(rb.position + Vector2(8, 6 + row), Vector2(rb.size.x - 16, row)), p.stamina / p.max_stamina, Color(0.95, 0.8, 0.2), "bolt", p.exhausted)
-	_bar(Rect2(rb.position + Vector2(8, 6 + row * 2), Vector2(rb.size.x - 16, row)), p.food / 100.0, Color(0.5, 0.8, 0.3), "leaf", p.food < 20.0)
-	_bar(Rect2(rb.position + Vector2(8, 6 + row * 3), Vector2(rb.size.x - 16, row)), p.water / 100.0, Color(0.3, 0.62, 0.95), "drop", p.water < 20.0)
+	_bar_n(Rect2(rb.position + Vector2(8, 6), Vector2(rb.size.x - 16, row)), p.health, p.max_health, Color(0.9, 0.25, 0.22), "heart", p.health < p.max_health * 0.3)
+	_bar_n(Rect2(rb.position + Vector2(8, 6 + row), Vector2(rb.size.x - 16, row)), p.stamina, p.max_stamina, Color(0.95, 0.8, 0.2), "bolt", p.exhausted)
+	_bar_n(Rect2(rb.position + Vector2(8, 6 + row * 2), Vector2(rb.size.x - 16, row)), p.food, 100.0, Color(0.5, 0.8, 0.3), "leaf", p.food < 20.0)
+	_bar_n(Rect2(rb.position + Vector2(8, 6 + row * 3), Vector2(rb.size.x - 16, row)), p.water, 100.0, Color(0.3, 0.62, 0.95), "drop", p.water < 20.0)
 	# abilities owned
 	var ra: Rect2 = rects.abilities
 	var ax := ra.position.x + 15.0
@@ -133,6 +140,22 @@ func _draw() -> void:
 		draw_rect(r, Color(0.03, 0.05, 0.04, 0.7 * a))
 		_text(Vector2(rn.position.x, y + 23), n.text, 18, Color(col2.r, col2.g, col2.b, a), HORIZONTAL_ALIGNMENT_CENTER, rn.size.x)
 		y += 36.0
+	# status lines under the notes: hidden (green), dying of thirst (red)
+	var sy: float = rn.position.y + 132.0
+	status_text = ""
+	if p.alive and p.hidden:
+		status_text = "HIDDEN"
+		_text(Vector2(rn.position.x, sy), status_text, 24, Color(0.35, 1.0, 0.4), HORIZONTAL_ALIGNMENT_CENTER, rn.size.x)
+		sy += 28.0
+	elif p.alive and p.in_water:
+		status_text = "HIDDEN IN WATER"
+		_text(Vector2(rn.position.x, sy), status_text, 22, Color(0.35, 1.0, 0.4), HORIZONTAL_ALIGNMENT_CENTER, rn.size.x)
+		_text(Vector2(rn.position.x, sy + 18.0), "crocodiles can still see you", 13, Color(0.8, 1.0, 0.8), HORIZONTAL_ALIGNMENT_CENTER, rn.size.x)
+		sy += 44.0
+	thirst_text = ""
+	if p.alive and p.thirst_left > 0.0:
+		thirst_text = "DRINK WATER!  %d s" % int(ceil(p.thirst_left))
+		_text(Vector2(rn.position.x, sy), thirst_text, 24, Color(1.0, 0.35, 0.3), HORIZONTAL_ALIGNMENT_CENTER, rn.size.x)
 	# what the action button will do
 	if hint != "" and game.controls.buttons.has("act"):
 		var b: Dictionary = game.controls.buttons.act
