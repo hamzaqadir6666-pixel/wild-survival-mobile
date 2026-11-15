@@ -1,0 +1,8 @@
+# Binaries are already compressed: keep them byte-identical for direct download
+# links and skip the redundant "binary" diff noise.
+*.exe   binary
+*.zip   binary
+*.ico   binary
+*.bmp   binary
+*.png   binary
+*.pdb   binary

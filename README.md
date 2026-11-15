@@ -15,6 +15,18 @@ installation framework: two small Win32 executables cross-compiled from C++17.
 > SmartScreen will warn because the binaries are not code-signed: **More info → Run anyway**,
 > or verify the SHA-256 first.
 
+**Direct download links (GitHub):**
+
+| Artifact | Link |
+| --- | --- |
+| Portable ZIP | <https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/AeroExplorer-portable.zip?raw=true> |
+| Setup wizard | <https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/AeroExplorerSetup.exe?raw=true> |
+| Portable EXE | <https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/AeroExplorer.exe?raw=true> |
+| Uninstaller | <https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/Uninstall.exe?raw=true> |
+
+The ZIP is also stored uncompressed-friendly inside the repository, so the branch archive
+(`Code → Download ZIP`) contains it too and needs no extra request.
+
 ---
 
 ## 1. Quick start
