@@ -44,8 +44,7 @@ Predators lunge: once in reach they keep closing in until their jaws touch the t
 land. Animals without a bite clip (the 0 A.D. cats and the crocodile) pounce with a crouch-leap-strike pose instead.
 
 A hunter that can see you no longer gives up after a few seconds: it tires and slows a little, but it keeps coming
-until you are out of sight. Ways to hide: a safe thicket, the inside of any bush (green **HIDDEN** text; needs a head
-start of about 4 m), or deep water (**HIDDEN IN WATER**; crocodiles still see you). Outrunning it far enough also works.
+until you are out of sight. Ways to hide: a safe thicket (green **HIDDEN** text) or deep water (**HIDDEN IN WATER**; crocodiles still see you). Outrunning it far enough also works.
 
 Every bar shows its number (for example `74 / 100`). An empty water bar starts a 30 second countdown
 (**DRINK WATER! 27 s**) instead of hurting at once; drinking cancels it, and at zero the animal dies of thirst.

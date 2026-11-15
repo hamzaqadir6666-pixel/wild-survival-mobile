@@ -37,7 +37,7 @@ var in_water := false
 var home := Vector2.ZERO
 var is_bird := false
 var hidden := false      # out of sight in a thicket or a bush (player only)
-var hide_kind := 0       # 0 = in the open, 1 = inside an ordinary bush, 2 = inside a safe thicket
+var hide_kind := 0       # 0 = in the open, 2 = inside a safe thicket
 var sneaking := false
 var noise := 0.0         # how far the animal can be heard, metres
 var lie_y := 0.2

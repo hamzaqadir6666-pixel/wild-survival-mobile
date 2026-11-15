@@ -23,7 +23,6 @@ var landmarks: Array = []     # {kind,name,x,z}
 var lakes: Array = []
 var plants: Array = []        # {t,x,z}
 var veg_types: Array = []
-var bush_grid := {}           # same layout: bushes big enough to hide in
 var tree_grid := {}           # cell key -> PackedFloat32Array [x, z, radius, ...]
 var loaded := false
 
@@ -95,26 +94,6 @@ func add_tree(x: float, z: float, radius: float) -> void:
 	var arr: PackedFloat32Array = tree_grid.get(key, PackedFloat32Array())
 	arr.append(x); arr.append(z); arr.append(radius)
 	tree_grid[key] = arr
-
-func add_bush(x: float, z: float, radius: float) -> void:
-	var key := int(x / 8.0) + int(z / 8.0) * 1000
-	var arr: PackedFloat32Array = bush_grid.get(key, PackedFloat32Array())
-	arr.append(x); arr.append(z); arr.append(radius)
-	bush_grid[key] = arr
-
-## is this point inside the leaves of a bush?
-func bush_at(x: float, z: float) -> bool:
-	var cx := int(x / 8.0)
-	var cz := int(z / 8.0)
-	for oz in [-1, 0, 1]:
-		for ox in [-1, 0, 1]:
-			var arr = bush_grid.get(cx + ox + (cz + oz) * 1000)
-			if arr == null: continue
-			for i in range(0, arr.size(), 3):
-				var dx: float = x - arr[i]
-				var dz: float = z - arr[i + 1]
-				if dx * dx + dz * dz < arr[i + 2] * arr[i + 2]: return true
-	return false
 
 ## pushes a position out of tree trunks; returns the corrected position
 func collide_trees(p: Vector2, body: float) -> Vector2:

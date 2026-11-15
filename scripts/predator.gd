@@ -77,12 +77,9 @@ func can_enter(x: float, z: float) -> bool:
 	return h > -0.45
 
 ## deer sensing: sight (cone, shorter when the deer sneaks, at night or in rain) and hearing
-## the player is out of this hunter's sight: in a safe thicket, deep inside a bush (unless the hunter
-## is right on top of it), or swimming where a land hunter cannot follow
+## the player is out of this hunter's sight: in a safe thicket, or swimming where a land hunter cannot follow
 func cant_see(deer: Animal) -> bool:
 	if deer.hide_kind == 2: return true
-	# a bush only works with a head start: a hunter within 4 m when you slip in has seen where you went
-	if deer.hide_kind == 1: return unseen > 0.0 or dist_to(deer.position) > 4.0
 	return deer.in_water and style != "water"
 
 func senses_deer() -> bool:

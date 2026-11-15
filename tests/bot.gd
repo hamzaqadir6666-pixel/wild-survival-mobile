@@ -173,8 +173,11 @@ func _tests() -> void:
 	await secs(0.3)
 	check("context action on grass is graze", p.context() == "graze", p.context())
 	c.act = true
-	await secs(4.0)
+	await secs(1.8)
+	var slow_start: bool = p.food < 51.0 and p.action == "graze"
+	await secs(5.2)
 	check("grazing fills the food bar", p.food > 60.0, "(%.0f)" % p.food)
+	check("grazing takes its time: nothing in the first 2 s, about 10 food per mouthful", slow_start and p.food < 85.0, "(%.0f after 7 s)" % p.food)
 	check("grazing plays the eat animation", p.cur_anim == "eat")
 	c.move = Vector2(0, 1)
 	await secs(0.3)
@@ -191,7 +194,7 @@ func _tests() -> void:
 	await secs(0.3)
 	check("context action at the shore is drink", p.context() == "drink", p.context())
 	c.act = true
-	await secs(4.0)
+	await secs(7.0)
 	check("drinking fills the water bar", p.water > 60.0, "(%.0f)" % p.water)
 	_place(400, 520)
 	var f0 := p.food
@@ -740,33 +743,8 @@ func _tests_hunter() -> void:
 		p.health = p.max_health
 		if dogged.state != Predator.CHASE and dogged.state != Predator.ATTACK: still = false; break
 	check("a lion that can see you is still after you 26 s later (it used to quit after 7 s)", still, Predator.STATE_NAMES[dogged.state])
-	# ... until you hide in a bush
-	var bush := Vector2.ZERO
-	for key in World.bush_grid:
-		var arr: PackedFloat32Array = World.bush_grid[key]
-		var q := Vector2(arr[0], arr[1])
-		if arr[2] > 1.2 and World.thicket_at(q.x, q.y, 25.0) < 0 and World.height(q.x, q.y) > 0.5 and World.playable(q.x + 20.0, q.y) and World.height(q.x + 20.0, q.y) > 0.5:
-			bush = q; break
 	_quiet()
-	_place(bush.x + 5.0, bush.y)
-	await frames(8)
-	var open_ok: bool = not p.hidden and g.hud.status_text == ""
-	var seeker: Predator = g.fauna._make_predator("lion", Vector2(bush.x + 20.0, bush.y))
-	seeker.pack = [seeker]
-	seeker.last_seen = p.pos2()
-	seeker.engage()
-	_place(bush.x, bush.y)
-	var lost := false
-	var shown := false
-	for i in 400:
-		await get_tree().process_frame
-		_place(bush.x, bush.y)
-		p.health = p.max_health
-		if g.hud.status_text == "HIDDEN": shown = true
-		if seeker.state != Predator.CHASE and seeker.state != Predator.ATTACK and seeker.state != Predator.STALK: lost = true; break
-	check("standing inside a bush hides you: green HIDDEN text appears", open_ok and p.hidden and p.hide_kind == 1 and shown, "(bush at %.0f, %.0f)" % [bush.x, bush.y])
-	check("the hunter loses a deer hidden in a bush and leaves", lost, Predator.STATE_NAMES[seeker.state])
-	_quiet()
+	check("ordinary bushes no longer hide you (only safe thickets and deep water do)", not World.has_method("bush_at") and p.hide_kind == 0)
 	# ... or swim into deep water
 	var deep := Vector2.ZERO
 	for i in 16000:

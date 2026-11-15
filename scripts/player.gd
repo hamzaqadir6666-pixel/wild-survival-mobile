@@ -26,6 +26,7 @@ var rest := 0
 var rest_t := 0.0
 var flinch := 0.0
 var flinch_clip := "hit"
+const MOUTHFUL := 2.2             # seconds per bite of grass / gulp of water
 const THIRST_TIME := 30.0
 var thirst_left := 0.0          # seconds left to drink once the water bar is empty (0 = not counting)
 var action := ""               # "", "graze", "drink"
@@ -252,7 +253,7 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 	splash.emitting = (in_water and speed > 0.5 and air <= 0.0) or (ground < -0.05 and ground >= -swim_depth and speed > 2.5 and air <= 0.0)
 	splash.position.y = (-position.y) + 0.05 if ground < 0.0 else 0.0
 	if blob: blob.visible = not in_water and air < 2.5
-	hide_kind = 2 if World.thicket_at(position.x, position.z) >= 0 else (1 if air <= 0.0 and not in_water and World.bush_at(position.x, position.z) else 0)
+	hide_kind = 2 if World.thicket_at(position.x, position.z) >= 0 else 0
 	hidden = hide_kind > 0
 	# ---- noise heard by hunters ----
 	if has("ghostfern"): noise = 0.0
@@ -269,14 +270,15 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 		speed = 0.0
 		action_time += delta
 		play("eat")
-		if action_time >= 1.5:
+		# one mouthful every MOUTHFUL seconds: the head has time to go down and stay down
+		if action_time >= MOUTHFUL:
 			action_time = 0.0
 			if action == "graze":
-				food = minf(100.0, food + 15.0)
+				food = minf(100.0, food + 10.0)
 				Sfx.play("eat", 0.5, randf_range(0.9, 1.1))
 				if food >= 100.0: action = ""; note.emit("Food is full.", 0)
 			elif action == "drink":
-				water = minf(100.0, water + 24.0)
+				water = minf(100.0, water + 14.0)
 				Sfx.play("drink", 0.5, randf_range(0.9, 1.1))
 				if water >= 100.0: action = ""; note.emit("Water is full.", 0)
 	elif air > 0.0:
@@ -332,7 +334,7 @@ func begin_context() -> void:
 	var c := context()
 	if c == "": return
 	action = c
-	action_time = 0.6
+	action_time = 0.0
 	speed = 0.0
 
 func _splash_sound(v: float) -> void:
