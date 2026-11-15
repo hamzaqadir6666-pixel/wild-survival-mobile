@@ -10,6 +10,7 @@ const TIER_FAR := 2      # hidden, position updated about once per second
 static var _info := {}
 static var _mats := {}
 static var _looped := {}
+static var _scenes := {}
 static var _bird_lib: AnimationLibrary
 static var _bird_mats := {}
 static var _blob_mesh: QuadMesh
@@ -44,6 +45,7 @@ var walk_cycle := 1.0
 var _rate_k := 1.0       # clip substitution: "run" played with the walk clip
 var _pose := ""          # body pose that stands in for a missing clip
 var _pose_tween: Tween
+var leap := 1.0          # height of the pounce pose (the crocodile stays low)
 
 ## removes the model so another species can be set up on the same node
 func clear_model() -> void:
@@ -64,7 +66,12 @@ func setup(sp: String) -> void:
 	if is_bird:
 		_setup_bird()
 	else:
-		var scene: PackedScene = load("res://assets/models/animals/%s.glb" % cfg.model)
+		# keep every loaded model alive: if the last animal of a kind is removed Godot would unload the file,
+		# and the next one would come back with its clips no longer set to loop (legs freezing mid-run)
+		if not _scenes.has(cfg.model):
+			_scenes[cfg.model] = load("res://assets/models/animals/%s.glb" % cfg.model)
+			_looped.erase(cfg.model)
+		var scene: PackedScene = _scenes[cfg.model]
 		var inf: Dictionary = info()[cfg.model]
 		var inner: Node3D = scene.instantiate()
 		if inf.get("flip", false): inner.rotation.y = PI          # these source models look down -Z
@@ -89,10 +96,28 @@ func setup(sp: String) -> void:
 		if anim and not _looped.has(cfg.model):
 			_looped[cfg.model] = true
 			for a in ["idle", "idle2", "walk", "run", "eat"]:
-				if anim.has_animation(a): anim.get_animation(a).loop_mode = Animation.LOOP_LINEAR
+				if anim.has_animation(a):
+					anim.get_animation(a).loop_mode = Animation.LOOP_LINEAR
+					Animal.close_loop(anim.get_animation(a))
 		if anim: anim.playback_default_blend_time = 0.18
 	apply_quality()
 	play("idle")
+
+## Some clips were exported without their closing frame: the last pose is one step short of the first,
+## so the legs jerk every time the clip wraps. Give those clips one more frame of length; Godot then
+## blends last -> first across the wrap.
+static func close_loop(an: Animation) -> void:
+	var worst := 0.0
+	var keys := 0
+	for t in an.get_track_count():
+		if an.track_get_type(t) != Animation.TYPE_ROTATION_3D: continue
+		var n := an.track_get_key_count(t)
+		if n < 2: continue
+		keys = maxi(keys, n)
+		var a: Quaternion = an.track_get_key_value(t, 0)
+		var b: Quaternion = an.track_get_key_value(t, n - 1)
+		worst = maxf(worst, a.angle_to(b))
+	if worst > 0.05 and keys > 2: an.length += an.length / float(keys - 1)
 
 func _material(sp: String) -> ShaderMaterial:
 	if _mats.has(sp): return _mats[sp]
@@ -230,8 +255,14 @@ func play(a: String, rate := 1.0) -> void:
 					"death":
 						_set_pose("death")
 						anim.pause()
+					"attack":
+						# no bite clip: a pounce pose, legs galloping through the leap
+						_set_pose("attack")
+						_rate_k = run_nat / maxf(walk_nat, 0.01)
+						_rate_cap = maxf(walk_cycle / 0.3, 1.6)
+						anim.play("walk")
 					_:
-						_set_pose(a if a == "eat" or a == "attack" else "")
+						_set_pose(a if a == "eat" else "")
 						anim.play("idle")
 	anim.speed_scale = minf(rate * _rate_k, _rate_cap)
 
@@ -252,10 +283,16 @@ func _set_pose(p: String) -> void:
 			_pose_tween.tween_property(model, "rotation", Vector3(0, 0, 1.5), 0.35)
 			_pose_tween.tween_property(model, "position", Vector3(0, lie_y, 0), 0.35)
 		"attack":
-			model.rotation = Vector3(-0.16, 0, 0)
+			# crouch -> spring up and forward with the forequarters raised -> come down on the prey -> recover
+			var k := leap
 			_pose_tween = create_tween()
-			_pose_tween.tween_property(model, "position", Vector3(0, 0, body * 1.6), 0.14)
-			_pose_tween.parallel().tween_property(model, "rotation", Vector3(0.2, 0, 0), 0.14)
+			_pose_tween.tween_property(model, "position", Vector3(0, -0.12 * body * k, -0.15 * body), 0.10)
+			_pose_tween.parallel().tween_property(model, "rotation", Vector3(0.12 * k, 0, 0), 0.10)
+			_pose_tween.tween_property(model, "position", Vector3(0, 0.75 * body * k, 0.35 * body), 0.16).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+			_pose_tween.parallel().tween_property(model, "rotation", Vector3(-0.5 * k, 0, 0), 0.16)
+			_pose_tween.tween_property(model, "position", Vector3(0, 0.12 * body * k, 0.55 * body), 0.11).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+			_pose_tween.parallel().tween_property(model, "rotation", Vector3(0.32, 0, 0), 0.11)
+			_pose_tween.tween_interval(0.16)
 			_pose_tween.tween_property(model, "position", Vector3.ZERO, 0.3)
 			_pose_tween.parallel().tween_property(model, "rotation", Vector3.ZERO, 0.3)
 

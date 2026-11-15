@@ -24,8 +24,10 @@ LANDMARKS = [('salt_lick', 'Western Salt Lick', 150, 420), ('salt_lick', 'Easter
 PLANT_COUNTS = [('clover', 14), ('moonpetal', 3), ('ironbark', 7), ('sunberry', 7), ('ghostfern', 3), ('owleye', 3), ('springlily', 3),
                 ('lotus', 3), ('herb', 10), ('honey', 7), ('toadstool', 10)]
 VEG = ['tree_a', 'tree_b', 'tree_c', 'tree_d', 'tree_big', 'tree_giant', 'palm_a', 'palm_b', 'banana', 'fern_a', 'fern_b',
-       'bush_a', 'bush_b', 'bush_berry', 'tall_grass', 'lily', 'rock_a', 'rock_b', 'rock_c']
+       'bush_a', 'bush_b', 'bush_berry', 'tall_grass', 'lily', 'rock_a', 'rock_b', 'rock_c',
+       'birch_a', 'birch_b', 'pine_a', 'pine_b', 'dead_a', 'dead_b', 'dead_c', 'bush_c', 'bush_d']
 VI = {n: i for i, n in enumerate(VEG)}
+TREE_K = {'birch_a': 0.9, 'birch_b': 0.82, 'pine_a': 1.15, 'pine_b': 1.0, 'dead_a': 0.9, 'dead_b': 1.15, 'dead_c': 1.3}      # brings the new trees to the height of the old ones
 
 def fnoise(n, beta, seed):
     r = np.random.default_rng(seed); fy = np.fft.fftfreq(n)[:, None]; fx = np.fft.fftfreq(n)[None, :]
@@ -161,8 +163,14 @@ def main():
     def tree_type(x, z, u):
         b = (int(x // 128), int(z // 128))
         if b not in block_types:
-            rr = np.random.default_rng(b[0] * 31 + b[1] * 7 + 5); block_types[b] = list(rr.choice(['tree_a', 'tree_b', 'tree_c', 'tree_d', 'tree_big'], 2, replace=False, p=[0.24, 0.22, 0.22, 0.14, 0.18]))
-        return block_types[b][0 if u < 0.6 else 1]
+            # every 128 m block mixes three kinds (plus one kind of dead tree, and pines on high ground), so each part of the forest has its own look but never just one tree
+            rr = np.random.default_rng(b[0] * 31 + b[1] * 7 + 5)
+            block_types[b] = list(rr.choice(['tree_a', 'tree_b', 'tree_c', 'tree_d', 'tree_big', 'birch_a', 'birch_b', 'pine_a', 'pine_b'], 3, replace=False,
+                                            p=[0.13, 0.12, 0.12, 0.09, 0.12, 0.12, 0.10, 0.10, 0.10]))
+        h = (int(x * 7.3) * 73856093 ^ int(z * 7.3) * 19349663) & 0xffff
+        if h % 100 < 9: return ('dead_a', 'dead_b', 'dead_c')[(b[0] * 5 + b[1] * 3) % 3]          # standing dead trees
+        if S.at('m', np.array([x]), np.array([z]))[0] > 0.3 and h % 100 < 60: return 'pine_a' if (b[0] + b[1]) & 1 else 'pine_b'      # high ground
+        return block_types[b][0 if u < 0.4 else (1 if u < 0.72 else 2)]
     x, z, u = grid(10.5)
     sv = S.at('s', x, z); mv = S.at('m', x, z); gv = S.at('grass', x, z); tv = S.at('trail', x, z)
     ok = (sv > 5) & (mv < 0.62) & (tv > 3.5) & clear_of(x, z, sp, 13) & clear_of(x, z, pl, 3.0) & (u < np.where(gv > 0.4, 0.015, 0.40) * np.where(mv > 0.2, 0.55, 1))
@@ -170,7 +178,7 @@ def main():
     for k in np.where(ok)[0]:
         if 5 < sv[k] < 24 and u2[k] < 0.55: add('palm_a' if (int(x[k] // 128) + int(z[k] // 128)) % 2 == 0 else 'palm_b', x[k], z[k], r.uniform(2.0, 2.8))
         else:
-            t = tree_type(x[k], z[k], u2[k]); add(t, x[k], z[k], r.uniform(3.2, 4.0) if t == 'tree_big' else r.uniform(2.3, 3.3))
+            t = tree_type(x[k], z[k], u2[k]); sc = r.uniform(3.2, 4.0) if t == 'tree_big' else r.uniform(2.3, 3.3); add(t, x[k], z[k], sc * TREE_K.get(t, 1.0))
     for (kind, _, lx, lz) in LANDMARKS:
         if kind == 'giant_tree': add('tree_giant', lx, lz, 7.0)
         if kind == 'berry_glade':
@@ -183,7 +191,8 @@ def main():
     def chunk_pick(x, z, a, b): return a if (int(x // 64) * 13 + int(z // 64) * 7) % 2 == 0 else b
     x, z, u = grid(12.5); sv = S.at('s', x, z); mv = S.at('m', x, z); gv = S.at('grass', x, z); tv = S.at('trail', x, z)
     for k in np.where((sv > 4) & (mv < 0.3) & (tv > 3) & (gv < 0.5) & (u < 0.5) & clear_of(x, z, sp, 12) & clear_of(x, z, pl, 2.5))[0]:
-        add(chunk_pick(x[k], z[k], 'bush_a', 'bush_b'), x[k], z[k], r.uniform(1.2, 2.0))
+        pair = (('bush_a', 'bush_d'), ('bush_b', 'bush_c'), ('bush_c', 'bush_a'), ('bush_d', 'bush_b'))[(int(x[k] // 64) * 13 + int(z[k] // 64) * 7) % 4]      # two kinds per 64 m chunk
+        add(pair[(int(x[k] * 3.1) * 31 + int(z[k] * 3.1) * 17) % 2], x[k], z[k], r.uniform(1.2, 2.0))
     x, z, u = grid(9.0); sv = S.at('s', x, z); mv = S.at('m', x, z); gv = S.at('grass', x, z); tv = S.at('trail', x, z)
     for k in np.where((sv > 3) & (mv < 0.2) & (tv > 2.5) & (gv < 0.6) & (u < 0.5) & clear_of(x, z, pl, 2.0))[0]:
         add(chunk_pick(x[k], z[k], 'fern_a', 'fern_b'), x[k], z[k], r.uniform(1.3, 2.0))

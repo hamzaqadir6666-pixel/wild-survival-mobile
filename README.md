@@ -34,6 +34,13 @@ and night still fall inside them; endless mode starts at 15:00.
 The background music is a calm nature loop (flute, harp, birdsong, a stream) synthesised by `tools/build_music.py`.
 Other plant-eaters are not afraid of you; they only run from hunters.
 
+The forest mixes eleven kinds of living tree (broadleaf, willow, birch, pine, palm), three kinds of dead tree and
+four kinds of bush; each 128 m block gets its own mix. Grass is one tuft per square metre around the camera, drawn as
+a single light mesh (9 triangles per tuft).
+
+Predators lunge: once in reach they keep closing in until their jaws touch the target, and only then does the bite
+land. Animals without a bite clip (the 0 A.D. cats and the crocodile) pounce with a crouch-leap-strike pose instead.
+
 When a hunter charges you, the calm music fades out, a chase loop starts and a heartbeat gets faster the closer the
 hunter is. Both loops are synthesised by `tools/build_chase_audio.py`.
 
@@ -72,7 +79,7 @@ All tests start the real game scene and drive it (no display or GPU needed):
 
 ```
 godot --headless --path . --import          # once
-godot --headless --path . -- --test         # 131 feature checks, exit code 0 = all passed
+godot --headless --path . -- --test         # 139 feature checks, exit code 0 = all passed
 godot --headless --path . -- --test-perf    # draw-call / triangle budget at 24 view points per preset
 godot --headless --path . -- --soak=600     # a bot plays for 600 s and prints memory, objects, orphan nodes
 ```

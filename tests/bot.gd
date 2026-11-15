@@ -691,6 +691,60 @@ func _tests_hunter() -> void:
 	_quiet()
 	await frames(25)
 	check("chase music and heartbeat stop when the hunt is over", float(Sfx.loop_target["chase"]) == 0.0 and float(Sfx.loop_target["heartbeat"]) == 0.0)
+	# ---------------- the bite reaches the target
+	for sp2 in ["lion", "hyena"]:
+		_place(400, 520)
+		p.health = p.max_health
+		await frames(3)
+		var biter: Predator = g.fauna._make_predator(sp2, Vector2(400 + 6.0, 520))
+		biter.pack = [biter]
+		biter.last_seen = p.pos2()
+		biter.engage()
+		var contact: float = biter.body * 1.8 + p.body * 1.2
+		var gap_at_bite := 99.0
+		var leapt := false
+		for i in 400:
+			await get_tree().process_frame
+			p.health = p.max_health
+			if biter.state == Predator.ATTACK:
+				if biter.has_bite_clip or biter.model.position.y > 0.1: leapt = true
+				if biter.hit_done:
+					gap_at_bite = biter.dist_to(p.position) - contact; break
+		check("%s lunges right up to its target before the bite lands" % sp2, gap_at_bite < 0.3 and leapt, "(gap %.2f m)" % gap_at_bite)
+		_quiet()
+	var hy: Animation = g.fauna._make_predator("hyena", Vector2(430, 540)).anim.get_animation("run")
+	var q0: Quaternion = Quaternion.IDENTITY
+	var worst := 0.0
+	for t in hy.get_track_count():
+		if hy.track_get_type(t) != Animation.TYPE_ROTATION_3D: continue
+		var kn := hy.track_get_key_count(t)
+		var step: float = (hy.track_get_key_value(t, 0) as Quaternion).angle_to(hy.track_get_key_value(t, kn - 1))
+		if step > worst: worst = step
+	check("hyena run clip has room to blend its last frame into the first", hy.length > hy.track_get_key_time(0, hy.track_get_key_count(0) - 1) + 0.02 or worst < 0.05, "(%.2f rad, len %.3f, last key %.3f, keys %d)" % [worst, hy.length, hy.track_get_key_time(0, hy.track_get_key_count(0) - 1), hy.track_get_key_count(0)])
+	_quiet()
+	await frames(3)
+	var again: Predator = g.fauna._make_predator("hyena", Vector2(430, 540))
+	check("clips still loop after every animal of a kind was removed and one comes back", again.anim.get_animation("run").loop_mode == Animation.LOOP_LINEAR and again.anim.get_animation("walk").loop_mode == Animation.LOOP_LINEAR)
+	_quiet()
+	# ---------------- more grass, more kinds of trees
+	var vc: Dictionary = World.info.veg_counts
+	var kinds := 0
+	for tname in ["tree_a", "tree_b", "tree_c", "tree_d", "tree_big", "birch_a", "birch_b", "pine_a", "pine_b", "palm_a", "palm_b"]:
+		if int(vc.get(tname, 0)) > 40 and g.vegetation.meshes.get(tname) != null: kinds += 1
+	check("eleven kinds of living tree grow in the forest", kinds == 11, "(%d)" % kinds)
+	var dead: int = int(vc.dead_a) + int(vc.dead_b) + int(vc.dead_c)
+	check("dead trees stand among them", dead > 120 and g.vegetation.meshes.get("dead_b") != null, "(%d)" % dead)
+	check("four kinds of bush plus berry bushes", int(vc.bush_a) > 200 and int(vc.bush_b) > 200 and int(vc.bush_c) > 200 and int(vc.bush_d) > 200)
+	var gp := Vector2(400, 520)
+	for i in 400:
+		var cand := Vector2(200 + (i % 20) * 30, 200 + (i / 20) * 30)
+		if World.biome(cand.x, cand.y) == World.GRASS and World.biome(cand.x + 12, cand.y) == World.GRASS and World.biome(cand.x, cand.y + 12) == World.GRASS:
+			gp = cand; break
+	g.grass.update(Vector3(gp.x, 0, gp.y))
+	var tufts: int = g.grass.multimesh.visible_instance_count
+	var tuft_tris: int = g.grass.multimesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size() / 3
+	var per_m2: float = tufts / (PI * g.grass._radius * g.grass._radius)
+	check("grass is dense: at least one tuft for every 2 square metres of meadow", per_m2 > 0.5 and tuft_tris <= 12, "(%d tufts, %.2f per m2, %d tris each)" % [tufts, per_m2, tuft_tris])
 	# ---------------- clock
 	g.sky.hour = 10.0
 	var h0: float = g.sky.hour
@@ -850,13 +904,13 @@ func _perf() -> void:
 				tris += 230 if a.is_bird else int(Animal.info()[a.cfg.model].tris)
 			dc += 2; tris += 2100 + 2            # deer + its blob shadow
 			dc += 8; tris += 8 * 230             # sky birds (2 hawks at most in view)
-			dc += 1; tris += g.grass.multimesh.visible_instance_count * 64
+			dc += 1; tris += g.grass.multimesh.visible_instance_count * 9
 			dc += 4; tris += 400                 # sky dome, sun, moon, rain
 			for it in g.plants.items:
 				if it.node.visible and _box_in(planes, it.node.position, Vector3(1, 1, 1)):
 					dc += 2; tris += 150
 			dc += 6                              # HUD, minimap, touch controls (canvas batches)
-			part["grass"] = g.grass.multimesh.visible_instance_count * 64
+			part["grass"] = g.grass.multimesh.visible_instance_count * 9
 			if tris > worst_tris: worst_part = part
 			worst_dc = maxi(worst_dc, dc); worst_tris = maxi(worst_tris, tris)
 			sum_dc += dc; sum_tris += tris; n += 1

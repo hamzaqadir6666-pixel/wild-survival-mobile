@@ -176,5 +176,73 @@
   "tris": 258,
   "height": 1.11,
   "radius": 0.68
+ },
+ "birch_a": {
+  "source": "BirchTree_1",
+  "tris": 480,
+  "height": 3.6,
+  "radius": 1.9,
+  "lod1_tris": 128,
+  "lod2_tris": 106
+ },
+ "birch_b": {
+  "source": "BirchTree_3",
+  "tris": 480,
+  "height": 4.06,
+  "radius": 1.16,
+  "lod1_tris": 122,
+  "lod2_tris": 72
+ },
+ "pine_a": {
+  "source": "PineTree_1",
+  "tris": 438,
+  "height": 2.7,
+  "radius": 1.01,
+  "lod1_tris": 114,
+  "lod2_tris": 84
+ },
+ "pine_b": {
+  "source": "PineTree_3",
+  "tris": 459,
+  "height": 3.31,
+  "radius": 1.09,
+  "lod1_tris": 123,
+  "lod2_tris": 77
+ },
+ "dead_a": {
+  "source": "CommonTree_Dead_3",
+  "tris": 300,
+  "height": 3.0,
+  "radius": 0.53,
+  "lod1_tris": 90,
+  "lod2_tris": 44
+ },
+ "dead_b": {
+  "source": "BirchTree_Dead_1",
+  "tris": 260,
+  "height": 2.25,
+  "radius": 1.53,
+  "lod1_tris": 84,
+  "lod2_tris": 56
+ },
+ "dead_c": {
+  "source": "Willow_Dead_3",
+  "tris": 220,
+  "height": 1.91,
+  "radius": 1.41,
+  "lod1_tris": 70,
+  "lod2_tris": 44
+ },
+ "bush_c": {
+  "source": "Bush_1",
+  "tris": 150,
+  "height": 1.24,
+  "radius": 0.85
+ },
+ "bush_d": {
+  "source": "Bush_2",
+  "tris": 129,
+  "height": 1.1,
+  "radius": 0.67
  }
 }

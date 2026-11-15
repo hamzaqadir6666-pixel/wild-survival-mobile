@@ -19,6 +19,7 @@ var hunger := 30.0
 var goal := Vector2.ZERO
 var hit_done := false
 var attack_len := 1.0
+var has_bite_clip := false
 var pack: Array = []
 var pack_i := 0
 var style := ""
@@ -35,7 +36,10 @@ func start(h: Vector2) -> void:
 	yaw = rng.randf() * TAU; rotation.y = yaw
 	timer = rng.randf_range(1.0, 8.0)
 	hunger = rng.randf_range(25.0, 90.0)
-	if anim and anim.has_animation("attack"): attack_len = anim.get_animation("attack").length
+	# the bite lands at attack_len * 0.4 / 1.25: for the pounce pose that is the moment the animal comes down
+	has_bite_clip = anim != null and anim.has_animation("attack")
+	attack_len = anim.get_animation("attack").length if has_bite_clip else 1.15
+	if style == "water": leap = 0.3
 	set_state(REST)
 
 func set_state(s: int) -> void:
@@ -267,10 +271,22 @@ func _attack(delta: float) -> void:
 	speed = 0.0
 	timer += delta
 	var valid := target != null and is_instance_valid(target)
-	if valid: face(target.pos2() - pos2(), delta, 10.0)
+	# jaws meet the target: this animal's front end against the target's body
+	var contact := body * 1.8 + (target.body * 1.2 if valid else 0.0)
+	if valid:
+		var tp := target.pos2()
+		# the lunge: keep closing in until the bite lands, instead of snapping at the air from a distance
+		if not hit_done and target.alive and pos2().distance_to(tp) > contact:
+			var to := tp - pos2()
+			var d0 := to.length()
+			var stepd := minf(d0 - contact, float(cfg.run) * 1.15 * delta)
+			var np := pos2() + to / d0 * stepd
+			if can_enter(np.x, np.y): place(np.x, np.y)
+		face(tp - pos2(), delta, 14.0)
+	if not has_bite_clip and timer > 0.9 and cur_anim == "attack": play("idle")
 	if not hit_done and timer >= attack_len * 0.4 / 1.25:
 		hit_done = true
-		if valid and target.alive and dist_to(target.position) < float(cfg.reach) * 1.45 + target.body * 0.5:
+		if valid and target.alive and dist_to(target.position) < contact + 0.9:
 			if on_deer:
 				if not target.hidden: fauna.hit_deer(self, cfg.dmg)
 			else:

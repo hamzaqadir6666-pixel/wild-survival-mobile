@@ -22,12 +22,20 @@ MODELS = {
     'rock_a': ('Rock_Moss_4', 128, 0), 'rock_b': ('Rock_Moss_6', 116, 0), 'rock_c': ('Rock_1', 70, 0),
     'p_flower': ('Flowers', 200, 0), 'p_spike': ('Plant_5', 240, 0), 'p_corn': ('Corn_2', 240, 0), 'p_twig': ('Plant_2', 160, 0),
     'p_log': ('WoodLog_Moss', 260, 0), 'p_stump': ('TreeStump', 200, 0), 'p_berry': ('BushBerries_2', 260, 0),
+    'birch_a': ('BirchTree_1', 480, 120), 'birch_b': ('BirchTree_3', 480, 120), 'pine_a': ('PineTree_1', 440, 110), 'pine_b': ('PineTree_3', 460, 120),
+    'dead_a': ('CommonTree_Dead_3', 300, 90), 'dead_b': ('BirchTree_Dead_1', 260, 80), 'dead_c': ('Willow_Dead_3', 220, 70),
+    'bush_c': ('Bush_1', 150, 0), 'bush_d': ('Bush_2', 130, 0),
 }
 FOLIAGE = ('Green', 'DarkGreen', 'Yellow', 'Pink', 'Cyan', 'Red')
 # richer jungle colours (sRGB) replacing the pack's dull defaults
 RECOLOR = {'Green': (0.25, 0.44, 0.17), 'DarkGreen': (0.15, 0.33, 0.14), 'Brown': (0.36, 0.27, 0.20), 'Gray': (0.47, 0.47, 0.45)}
 PER_MODEL = {'tall_grass': {'Yellow': (0.36, 0.47, 0.20)}, 'grass_tuft': {'Green': (0.27, 0.43, 0.17)},
-             'tree_giant': {'DarkGreen': (0.13, 0.30, 0.13)}, 'banana': {'Green': (0.30, 0.52, 0.18)}}
+             'tree_giant': {'DarkGreen': (0.13, 0.30, 0.13)}, 'banana': {'Green': (0.30, 0.52, 0.18)},
+             'birch_a': {'Green': (0.44, 0.56, 0.20), 'DarkGreen': (0.31, 0.47, 0.18), 'White': (0.80, 0.79, 0.73), 'Black': (0.16, 0.15, 0.14)},
+             'birch_b': {'Green': (0.50, 0.55, 0.19), 'DarkGreen': (0.36, 0.46, 0.17), 'White': (0.80, 0.79, 0.73), 'Black': (0.16, 0.15, 0.14)},
+             'pine_a': {'Green': (0.12, 0.31, 0.17), 'Brown': (0.30, 0.21, 0.16)}, 'pine_b': {'Green': (0.15, 0.34, 0.16), 'Brown': (0.30, 0.21, 0.16)},
+             'dead_a': {'Brown': (0.45, 0.39, 0.33)}, 'dead_b': {'White': (0.70, 0.68, 0.62), 'Black': (0.18, 0.16, 0.15)}, 'dead_c': {'Brown': (0.31, 0.25, 0.21)},
+             'bush_c': {'Green': (0.15, 0.30, 0.15)}, 'bush_d': {'Green': (0.46, 0.50, 0.20)}}
 
 def simplify(P, I, target):
     if len(I) <= target: return P, I
@@ -73,7 +81,10 @@ def bake(name, src, target):
 
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True); info = {}; sheet = []
+    only = [a for a in sys.argv[1:] if not a.startswith('--')]      # bake just these names, keep the rest
+    if only: info = json.load(open(f'{OUT}/nature.json'))
     for name, (src, t0, t1) in MODELS.items():
+        if only and name not in only: continue
         P, N, C, UV, I = bake(name, src, t0); write_glb(f'{OUT}/{name}.glb', P, N, C, UV, I, name)
         info[name] = {'source': src, 'tris': int(len(I)), 'height': round(float(P[:, 1].max()), 2), 'radius': round(float(np.abs(P[:, [0, 2]]).max()), 2)}
         sheet.append((name, P, I, C))

@@ -104,6 +104,15 @@ Baked by `tools/build_nature.py` (triangle reduction, colours into vertices, lig
 | `assets/models/nature/p_log.glb` | WoodLog_Moss | 258 |
 | `assets/models/nature/p_stump.glb` | TreeStump | 197 |
 | `assets/models/nature/p_berry.glb` | BushBerries_2 | 258 |
+| `assets/models/nature/birch_a.glb` | BirchTree_1 | 480 (128 / 106) |
+| `assets/models/nature/birch_b.glb` | BirchTree_3 | 480 (122 / 72) |
+| `assets/models/nature/pine_a.glb` | PineTree_1 | 438 (114 / 84) |
+| `assets/models/nature/pine_b.glb` | PineTree_3 | 459 (123 / 77) |
+| `assets/models/nature/dead_a.glb` | CommonTree_Dead_3 | 300 (90 / 44) |
+| `assets/models/nature/dead_b.glb` | BirchTree_Dead_1 | 260 (84 / 56) |
+| `assets/models/nature/dead_c.glb` | Willow_Dead_3 | 220 (70 / 44) |
+| `assets/models/nature/bush_c.glb` | Bush_1 | 150 |
+| `assets/models/nature/bush_d.glb` | Bush_2 | 129 |
 
 ## Sounds
 
