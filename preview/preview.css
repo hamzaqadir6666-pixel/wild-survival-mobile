@@ -906,6 +906,12 @@ main {
   flex-direction: column;
   gap: 10px;
 }
+.card-hero {
+  border-color: #9dc3e8;
+  background: linear-gradient(180deg, #f4faff 0%, #ffffff 62%);
+  box-shadow: 0 10px 26px rgba(21, 92, 160, 0.16);
+}
+.card-hero h3 { color: #0b4f8a; }
 .card h3 { margin: 0; font-size: 15px; color: #12395f; }
 .card p { margin: 0; font-size: 12.5px; color: #5a7590; line-height: 1.55; flex: 1; }
 .card .btn { justify-content: center; }

@@ -12,37 +12,34 @@ installation framework: two small Win32 executables cross-compiled from C++17.
 | Portable bundle | [`releases/AeroExplorer-portable.zip`](releases/AeroExplorer-portable.zip) | ~0.7 MB | Explorer + Uninstaller + this README |
 | Checksums | [`releases/SHA256SUMS.txt`](releases/SHA256SUMS.txt) | — | SHA-256 of every artifact |
 
-> **Everything in one ZIP:** `releases/AeroExplorer-v1.0.0-win64.zip` (setup + portable + uninstaller + README + INSTALL.txt, ~1.8 MB).
+> **Everything in one ZIP:** `releases/AeroExplorer-v1.0.0-win64.zip` — setup wizard + portable
+> EXE + uninstaller + `README.md` + `INSTALL.txt` + `SHA256SUMS.txt`, ~1.8 MB.
+> [Google Drive mirror](https://drive.google.com/file/d/196XvaIv74mqLowsSILb2FlKcwR1XeRfQ/view) ·
+> [GitHub raw](https://api.github.com/repos/hamzaqadir6666-pixel/wild-survival-mobile/contents/releases/AeroExplorer-v1.0.0-win64.zip?ref=arena/98e7797b-wild-survival-mobile)
 
 > SmartScreen will warn because the binaries are not code-signed: **More info → Run anyway**,
 > or verify the SHA-256 first.
 
-**Direct download links (GitHub, no login needed):**
+**Direct download links (no login needed):**
 
 | Artifact | Direct link |
 | --- | --- |
-| **Portable ZIP** (Explorer + Uninstaller + README) | <https://codeload.github.com/hamzaqadir6666-pixel/wild-survival-mobile/zip/refs/heads/arena/98e7797b-wild-survival-mobile> |
+| **All-in-one ZIP** (recommended) | <https://api.github.com/repos/hamzaqadir6666-pixel/wild-survival-mobile/contents/releases/AeroExplorer-v1.0.0-win64.zip?ref=arena/98e7797b-wild-survival-mobile> |
+| All-in-one ZIP (Google Drive mirror) | <https://drive.google.com/uc?id=196XvaIv74mqLowsSILb2FlKcwR1XeRfQ&export=download> |
 | Setup wizard | <https://api.github.com/repos/hamzaqadir6666-pixel/wild-survival-mobile/contents/releases/AeroExplorerSetup.exe?ref=arena/98e7797b-wild-survival-mobile> |
 | Portable EXE | <https://api.github.com/repos/hamzaqadir6666-pixel/wild-survival-mobile/contents/releases/AeroExplorer.exe?ref=arena/98e7797b-wild-survival-mobile> |
 | Uninstaller | <https://api.github.com/repos/hamzaqadir6666-pixel/wild-survival-mobile/contents/releases/Uninstall.exe?ref=arena/98e7797b-wild-survival-mobile> |
+| Whole branch as ZIP | <https://codeload.github.com/hamzaqadir6666-pixel/wild-survival-mobile/zip/refs/heads/arena/98e7797b-wild-survival-mobile> |
 
-`codeload` returns `application/zip` straight away (the repo branch archive, which contains the
-`releases/` folder with both executables and `AeroExplorer-portable.zip`). The `api.github.com`
-content links return the raw binary; visit them in a browser and the file downloads, or use
-`curl -L -H "Accept: application/vnd.github.raw" -o file.exe "<link>"`.
+The `api.github.com` content links return the raw binary; open them in a browser and the file
+downloads, or use `curl -L -H "Accept: application/vnd.github.raw" -o file.zip "<link>"`.
+`codeload` returns `application/zip` straight away and contains the whole `releases/` folder.
+In the browser you can equally click **Code → Download ZIP** on the repository page.
 
-In the browser you can equally click **Code → Download ZIP** on the repository page, or open
-<https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/AeroExplorer-portable.zip?raw=true>
-and press **Download**.
+**Uploading to gofile.io:** sandboxes/CI often cannot reach it, so `scripts/upload_gofile.py`
+does the two-step API dance from your own machine — `python3 scripts/upload_gofile.py` prints
+the `https://gofile.io/d/...` link.
 
---- | --- |
-| Portable ZIP | <https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/AeroExplorer-portable.zip?raw=true> |
-| Setup wizard | <https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/AeroExplorerSetup.exe?raw=true> |
-| Portable EXE | <https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/AeroExplorer.exe?raw=true> |
-| Uninstaller | <https://github.com/hamzaqadir6666-pixel/wild-survival-mobile/blob/arena/98e7797b-wild-survival-mobile/releases/Uninstall.exe?raw=true> |
-
-The ZIP is also stored uncompressed-friendly inside the repository, so the branch archive
-(`Code → Download ZIP`) contains it too and needs no extra request.
 
 ---
 

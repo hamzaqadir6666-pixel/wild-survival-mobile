@@ -936,6 +936,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.</div>
         "AeroExplorerSetup.exe": ["setup", "[data-hash='setup']"],
         "AeroExplorer.exe": ["portable", "[data-hash='portable']"],
         "AeroExplorer-portable.zip": ["zip", "[data-hash='zip']"],
+        "AeroExplorer-v1.0.0-win64.zip": ["bundle", "[data-hash='bundle']"],
       };
       data.artifacts.forEach((artifact) => {
         const entry = lookup[artifact.name];

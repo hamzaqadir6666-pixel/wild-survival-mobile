@@ -29,6 +29,8 @@ EXPOSED_ARTIFACTS = [
     "AeroExplorer.exe",
     "AeroExplorerSetup.exe",
     "AeroExplorer-portable.zip",
+    "AeroExplorer-v1.0.0-win64.zip",
+    "INSTALL.txt",
     "Uninstall.exe",
     "SHA256SUMS.txt",
 ]
