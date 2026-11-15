@@ -8,8 +8,6 @@ var timer := 0.0
 var goal := Vector2.ZERO
 var flee_from := Vector2.ZERO
 var corpse_time := 0.0
-var hp := 30.0
-var meat := 0.0             # food left on the carcass for a hunting player
 var giant := false
 var rng := RandomNumberGenerator.new()
 
@@ -21,8 +19,6 @@ func start(h: Vector2) -> void:
 func respawn() -> void:
 	alive = true
 	giant = cfg.get("giant", false)
-	hp = float(cfg.get("hp", 30))
-	meat = 0.0
 	state = GRAZE
 	timer = rng.randf_range(2.0, 9.0)
 	var p := World.dry_near(rng, home, 2.0, 16.0)
@@ -37,25 +33,11 @@ func kill() -> void:
 	alive = false
 	state = DEAD
 	corpse_time = 45.0
-	meat = 30.0 + float(cfg.get("hp", 30)) * 0.8
 	speed = 0.0
 	play("death")
 	if is_bird and model:
 		model.rotation.z = 1.5
 		model.position.y = 0.12
-
-## bitten by the player; true when this brought it down
-func bitten(dmg: float, from: Vector2) -> bool:
-	if not alive or giant: return false
-	hp -= dmg
-	if hp <= 0.0:
-		kill()
-		return true
-	flee_from = from
-	state = FLEE
-	timer = 6.0
-	if cfg.sound != "": fauna.animal_sound(self, cfg.sound, float(cfg.get("pitch", 1.0)) * 1.15, 0.8)
-	return false
 
 func can_enter(x: float, z: float) -> bool:
 	return World.playable(x, z) and World.height(x, z) > -0.3

@@ -23,19 +23,16 @@ You are a deer in a jungle full of hunters. Landscape, touch only, built for low
 
 An **iOS** preset is included as well; exporting it needs a Mac with Xcode and your Apple team ID.
 
-## Prey or hunter
+## Choose your animal
 
-Main menu -> **Choose animal**. Two sides, each with its own 8-level campaign and endless mode:
+Main menu -> **Choose animal**: deer, gazelle, boar, goat or buffalo. All play the same levels; they differ in speed,
+health, stamina and jump. (Playing as a predator was tried and removed.)
 
-| Side | Animals | Goal of a level | Food |
-|---|---|---|---|
-| Prey | deer, gazelle, boar, goat, buffalo | survive the time and eat rare plants | graze |
-| Hunter | lion, tiger, cheetah, wolf, hyena, crocodile | bring down N animals before the time runs out | feed on kills |
+One real minute is one game hour, so a full day lasts 24 minutes. Later levels start later in the day so that dusk
+and night still fall inside them; endless mode starts at 15:00.
 
-Hunter rules: sneak close (animals see a walking hunter from about 16 m, a sneaking one from 5 m), sprint, press the paw button to
-bite. Big animals need several bites; elephants and rhinos cannot be hunted. Stand at the carcass and press again to feed.
-Only *stronger* hunters attack you (strength: crocodile > lion = tiger > hyena = wolf > cheetah); biting a weaker one drives it off.
-Rare-plant abilities belong to the prey side only.
+When a hunter charges you, the calm music fades out, a chase loop starts and a heartbeat gets faster the closer the
+hunter is. Both loops are synthesised by `tools/build_chase_audio.py`.
 
 ## Controls (touch)
 
@@ -72,7 +69,7 @@ All tests start the real game scene and drive it (no display or GPU needed):
 
 ```
 godot --headless --path . --import          # once
-godot --headless --path . -- --test         # 139 feature checks, exit code 0 = all passed
+godot --headless --path . -- --test         # 130 feature checks, exit code 0 = all passed
 godot --headless --path . -- --test-perf    # draw-call / triangle budget at 24 view points per preset
 godot --headless --path . -- --soak=600     # a bot plays for 600 s and prints memory, objects, orphan nodes
 ```

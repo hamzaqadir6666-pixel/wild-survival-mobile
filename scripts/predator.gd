@@ -74,11 +74,10 @@ func can_enter(x: float, z: float) -> bool:
 func senses_deer() -> bool:
 	var deer: Player = fauna.deer
 	if deer == null or not deer.alive or deer.hidden: return false
-	if deer.hunter and not fauna.hostile(species): return false      # rivals leave an equal or stronger hunter alone
 	var d := dist_to(deer.position)
 	if style == "water":
 		return d < cfg.sight and World.height(deer.position.x, deer.position.z) < 0.7
-	var vis: float = cfg.sight * fauna.sight_mult(species) * (0.6 if deer.hunter else 1.0)
+	var vis: float = cfg.sight * fauna.sight_mult(species)
 	if deer.sneaking: vis *= 0.5
 	if d < vis:
 		var to := Vector2(deer.position.x - position.x, deer.position.z - position.z) / maxf(d, 0.01)
@@ -106,11 +105,6 @@ func engage() -> void:
 		fauna.animal_sound(self, cfg.sound, cfg.pitch, 1.0)
 	for p in pack:
 		if p != self and is_instance_valid(p) and p.dist_to(position) < 90.0: p.alert(last_seen)
-
-## bitten by a hunter player that it does not dare to fight: runs home and stays away for a while
-func scare() -> void:
-	give_up(30.0)
-	fauna.animal_sound(self, cfg.sound, float(cfg.pitch) * 1.2, 0.8)
 
 func give_up(rest_time: float) -> void:
 	var was_deer := on_deer

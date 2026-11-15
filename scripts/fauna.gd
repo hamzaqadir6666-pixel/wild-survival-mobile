@@ -119,51 +119,6 @@ func spawn_level(level: Dictionary, start: Vector2) -> void:
 		if moved.has(old_home): a.home = moved[old_home]
 		if not a.alive or moved.has(old_home) or a.pos2().distance_to(a.home) > 60.0: a.respawn()
 
-## is this hunter species an enemy of the player?  Prey: always.  Hunter: only stronger species.
-func hostile(sp: String) -> bool:
-	if not deer.hunter: return true
-	return int(D.SPECIES[sp].get("power", 1)) > int(D.SPECIES[deer.species].get("power", 1))
-
-## the player's bite: nearest live animal in front, within reach.  Returns what happened.
-func player_bite(dmg: float) -> Dictionary:
-	var f: Vector2 = deer.forward()
-	var me: Vector2 = deer.pos2()
-	var best: Animal = null
-	var bd := 1e9
-	for a in prey:
-		if not a.alive: continue
-		var to: Vector2 = a.pos2() - me
-		var d := to.length()
-		if d < 2.6 + a.body + deer.body and (d < 1.2 or f.dot(to / d) > 0.2) and d < bd:
-			bd = d; best = a
-	if best != null:
-		if best.giant: return {"hit": true, "giant": true, "name": best.cfg.name}
-		var down: bool = best.bitten(dmg, me)
-		# the rest of the herd bolts
-		for a in prey:
-			if a != best and a.alive and not a.giant and a.dist_to(deer.position) < 30.0:
-				a.flee_from = me; a.state = Prey.FLEE; a.timer = 5.0
-		return {"hit": true, "killed": down, "animal": best, "name": best.cfg.name}
-	for p in predators:
-		var to2: Vector2 = p.pos2() - me
-		var d2 := to2.length()
-		if d2 < 2.8 + p.body + deer.body and (d2 < 1.2 or f.dot(to2 / d2) > 0.2):
-			var scared := not hostile(p.species) or dmg >= 50.0
-			if scared: p.scare()
-			return {"hit": true, "rival": true, "scared": scared, "name": p.cfg.name}
-	return {"hit": false}
-
-func carcass_near(at: Vector3, reach: float) -> Prey:
-	for a in prey:
-		if not a.alive and a.meat > 0.0 and a.dist_to(at) < reach + a.body: return a
-	return null
-
-func prey_in_reach() -> bool:
-	var me: Vector2 = deer.pos2()
-	for a in prey:
-		if a.alive and not a.giant and a.tier == Animal.TIER_NEAR and a.pos2().distance_to(me) < 2.6 + a.body + deer.body: return true
-	return false
-
 func _make_predator(sp: String, at: Vector2) -> Predator:
 	var pr := Predator.new()
 	pr.fauna = self
@@ -201,13 +156,7 @@ func hunter_gave_up(_pred: Predator) -> void:
 ## x, y = position of the danger, z > 0 when there is one
 func threat_near(a: Prey) -> Vector3:
 	var d := a.dist_to(deer.position)
-	var near_d := 7.0
-	var run_d := 15.0
-	if deer.hunter:
-		# a hunter is noticed from farther away, unless it sneaks (or is a tiger)
-		near_d = 5.0 if deer.sneaking else (11.0 if deer.ch.get("quiet", false) else 16.0)
-		run_d = 30.0
-	if deer.alive and (d < near_d or (d < run_d and deer.speed > 5.0)):
+	if deer.alive and (d < 7.0 or (d < 15.0 and deer.speed > 5.0)):
 		return Vector3(deer.position.x, deer.position.z, 1.0)
 	for p in predators:
 		var pd: float = p.dist_to(a.position)
@@ -285,7 +234,7 @@ func _roam(delta: float) -> void:
 	var best: Predator = null
 	var bd := 1e9
 	for p in predators:
-		if p.style == "water" or p.tired > 0.0 or p.leaving or not hostile(p.species): continue
+		if p.style == "water" or p.tired > 0.0 or p.leaving: continue
 		if p.state != Predator.REST and p.state != Predator.PATROL: continue
 		var d: float = p.dist_to(deer.position)
 		if d > 45.0 and d < bd:
@@ -312,7 +261,7 @@ func send_toward_deer(p: Predator, d: float) -> void:
 			other.timer = 70.0; other.on_deer = true; other.state = Predator.HUNT
 
 func _on_night() -> void:
-	if not deer.alive or deer.get_parent() == null or not hostile("hyena"): return
+	if not deer.alive or deer.get_parent() == null: return
 	var dp := deer.pos2()
 	var spot := World.dry_near(rng, dp, 75.0, 100.0)
 	var group: Array = []

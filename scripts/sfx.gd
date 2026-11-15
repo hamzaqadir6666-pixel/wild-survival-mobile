@@ -4,7 +4,9 @@ extends Node
 
 const ONE_SHOTS := ["growl", "roar", "snarl", "howl", "laugh", "hiss", "grunt", "bleat", "moo", "rooster", "crow", "eat", "drink", "click", "thud",
 	"thunder1", "thunder2", "step1", "step2", "step3", "step4", "splash1", "splash2", "splash3"]
-const LOOPS := ["amb_day", "amb_night", "amb_water", "amb_rain", "amb_wind"]
+const LOOPS := ["amb_day", "amb_night", "amb_water", "amb_rain", "amb_wind", "chase", "heartbeat"]
+const LOOP_BUS := {"chase": "Music", "heartbeat": "SFX"}      # everything else: Ambience
+var music_duck := 0.0      # 0..1, the calm music makes room for the chase music
 var streams := {}
 var pool: Array[AudioStreamPlayer] = []
 var loops := {}
@@ -26,7 +28,7 @@ func _ready() -> void:
 		s.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		s.loop_begin = 0
 		s.loop_end = int(s.get_length() * s.mix_rate)
-		var p := AudioStreamPlayer.new(); p.stream = s; p.bus = "Ambience"; p.volume_db = -60.0; add_child(p)
+		var p := AudioStreamPlayer.new(); p.stream = s; p.bus = LOOP_BUS.get(n, "Ambience"); p.volume_db = -60.0; add_child(p)
 		loops[n] = p; loop_target[n] = 0.0
 	music = AudioStreamPlayer.new(); music.bus = "Music"
 	var ms = load("res://assets/audio/music.ogg")
@@ -64,12 +66,18 @@ func set_loop(n: String, level: float) -> void:
 func silence_loops() -> void:
 	for n in LOOPS: loop_target[n] = 0.0
 
+## heart rate follows the danger: 1.0 = calm 75 bpm
+func set_heart_rate(k: float) -> void:
+	loops["heartbeat"].pitch_scale = clampf(k, 0.8, 2.2)
+
 func _process(delta: float) -> void:
+	music_duck = move_toward(music_duck, 1.0 if float(loop_target["chase"]) > 0.0 else 0.0, delta * 1.2)
+	music.volume_db = lerpf(-8.0, -40.0, music_duck)
 	for n in LOOPS:
 		var p: AudioStreamPlayer = loops[n]
 		var cur := db_to_linear(p.volume_db)
 		var t: float = loop_target[n]
-		cur = move_toward(cur, t, delta * 0.6)
+		cur = move_toward(cur, t, delta * (1.6 if LOOP_BUS.has(n) else 0.6))
 		if cur <= 0.003:
 			if p.playing: p.stop()
 			p.volume_db = -60.0

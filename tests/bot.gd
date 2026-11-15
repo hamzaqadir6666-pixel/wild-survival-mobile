@@ -510,7 +510,7 @@ func _tests() -> void:
 	check("night vision is brighter than night but well below daylight", e_nv > e_night * amb_night.get_luminance() * 1.8 and e_nv < e_day * 0.65, "(night %.2f, vision %.2f, day %.2f)" % [e_night * amb_night.get_luminance(), e_nv, e_day])
 	check("day returned: night pack is told to leave", g.fauna.predators.size() >= 0 and not g.sky.is_night)
 	_quiet()
-	g.sky.hour = 23.95
+	g.sky.hour = 23.985
 	var d0: int = g.sky.day
 	await secs(2.0)
 	check("day counter increases at midnight", g.sky.day == d0 + 1)
@@ -627,7 +627,7 @@ func _tests() -> void:
 	check("statistics recorded", int(Save.d.stats.games) >= 3 and int(Save.d.stats.deaths) >= 1)
 	await _tests_hunter()
 
-## second half: wildlife density, playable animals, the hunter campaign
+## second half: wildlife density, playable animals
 func _tests_hunter() -> void:
 	var g := game
 	var p: Player = g.player
@@ -649,17 +649,15 @@ func _tests_hunter() -> void:
 	# ---------------- prey characters
 	g.to_menu()
 	var stats_ok := true
-	for sp in D.CHAR_ORDER.prey + D.CHAR_ORDER.pred:
-		var side: String = D.CHARACTERS[sp].side
-		Save.d.side = side
-		Save.d.char[side] = sp
+	for sp in D.CHAR_ORDER:
+		Save.d.char = sp
 		g.start_level(0)
 		await frames(2)
 		_quiet()
-		if p.species != sp or p.hunter != (side == "pred") or absf(p.max_health - float(D.CHARACTERS[sp].hp)) > 0.01 or p.model == null or p.anim == null: stats_ok = false
+		if p.species != sp or absf(p.max_health - float(D.CHARACTERS[sp].hp)) > 0.01 or p.model == null or p.anim == null: stats_ok = false
 		g.to_menu()
-	check("11 playable animals (5 prey, 6 hunters) load with their own model and stats", stats_ok and D.CHAR_ORDER.prey.size() == 5 and D.CHAR_ORDER.pred.size() == 6)
-	Save.d.side = "prey"; Save.d.char.prey = "gazelle"
+	check("5 playable animals load with their own model and stats", stats_ok and D.CHAR_ORDER.size() == 5)
+	Save.d.char = "gazelle"
 	g.start_level(0)
 	await frames(2)
 	_quiet()
@@ -671,101 +669,38 @@ func _tests_hunter() -> void:
 	await secs(2.0)
 	var gz := p.pos2().distance_to(p0)
 	c.move = Vector2.ZERO; c.sprint = false
-	check("gazelle sprints faster than the deer", gz > 13.5, "(%.1f m in 2 s)" % gz)
-	g.to_menu()
-	# ---------------- hunter mode
-	Save.d.side = "pred"; Save.d.char.pred = "lion"
-	g.menus.open("character")
-	check("character screen opens for the hunter side", g.menus.current == "character")
-	g.menus.open("main")
-	g.start_level(0)
-	await frames(3)
-	check("hunter level starts: playing a lion, goal is kills against the clock", g.state == g.PLAY and p.hunter and p.species == "lion" and g.goal_text().begins_with("Kills 0 / 2"), g.goal_text())
-	check("hunter: plant abilities do not apply, strength is fixed", p.speed_mult == 1.0 and p.max_health == 170.0)
-	check("rivals: lions leave a lion alone, crocodiles do not", not g.fauna.hostile("lion") and not g.fauna.hostile("hyena") and g.fauna.hostile("crocodile"))
-	_quiet()
-	# find a gazelle and walk into its herd
-	var target: Prey = null
-	for a in g.fauna.prey:
-		if a.species == "gazelle" and a.alive:
-			target = a; break
-	var tp := target.pos2()
-	_place(tp.x - 24.0, tp.y)
-	c.move = Vector2.ZERO
-	await secs(1.0)
-	var calm: bool = target.state != Prey.FLEE
-	_place(target.position.x - 12.0, target.position.z)
-	await secs(1.0)
-	check("prey notices a walking hunter from farther away than it notices a deer", calm and target.state == Prey.FLEE, "(calm at 24 m: %s, state at 12 m: %d)" % [calm, target.state])
-	# bite: put the lion right behind it
-	target.state = Prey.GRAZE; target.timer = 99.0
-	_place(target.position.x, target.position.z - 1.5)
-	p.yaw = 0.0; p.rotation.y = 0.0
-	await frames(2)
-	check("action button offers a bite when prey is in reach", g.fauna.prey_in_reach())
-	c.act = true
-	await frames(3)
-	check("one lion bite brings down a gazelle and counts as a kill", not target.alive and g.kills == 1 and target.meat > 0.0, "(kills %d)" % g.kills)
-	await secs(1.2)
-	p.food = 40.0
-	_place(target.position.x, target.position.z - 1.2)
-	c.act = true
-	await frames(3)
-	var feeding := p.action == "feed"
-	await secs(4.0)
-	check("feeding on the carcass fills the food bar", feeding and p.food > 55.0, "(food %.0f)" % p.food)
-	# a buffalo needs more than one bite
-	var buf: Prey = null
-	for a in g.fauna.prey:
-		if a.species == "buffalo" and a.alive:
-			buf = a; break
-	_place(buf.position.x, buf.position.z - 1.6)
-	p.yaw = 0.0; p.rotation.y = 0.0; p.action = ""
-	await secs(1.0)
-	_place(buf.position.x, buf.position.z - 1.6)
-	p.yaw = 0.0; p.rotation.y = 0.0
-	c.act = true
-	await frames(3)
-	check("a buffalo survives the first bite and runs", buf.alive and buf.hp < 150.0 and buf.state == Prey.FLEE, "(hp %.0f)" % buf.hp)
-	var ele: Prey = null
-	for a in g.fauna.prey:
-		if a.species == "elephant": ele = a
-	check("elephants cannot be hunted", ele != null and not ele.bitten(500.0, Vector2.ZERO) and ele.alive)
-	g.kills = 2
-	for i in 400:
-		await get_tree().process_frame
-		if g.menus.current == "complete": break
-	check("hunt 1 completes at 2 kills and unlocks hunt 2", g.result.get("won", false) and int(Save.d.unlocked_pred) == 2 and g.result.hunter)
-	g.start_level(1)
-	await frames(3)
-	_quiet()
-	keep_alive = false
-	g.run_time = float(D.PRED_LEVELS[1].time) - 0.5
-	for i in 2000:
-		await get_tree().process_frame
-		if g.menus.current == "gameover": break
-	check("a hunt fails when the time runs out", g.menus.current == "gameover" and not g.result.won and str(g.result.cause).begins_with("The hunt"))
-	keep_alive = true
-	# a weak hunter is attacked by stronger ones
-	g.to_menu()
-	Save.d.char.pred = "cheetah"
-	g.start_level(0)
-	await frames(3)
-	_quiet()
-	check("a cheetah player has lions and hyenas as enemies", g.fauna.hostile("lion") and g.fauna.hostile("hyena") and not g.fauna.hostile("cheetah"))
-	var rival: Predator = g.fauna._make_predator("lion", Vector2(413, 520))
+	check("gazelle sprints faster than the deer", gz > float(D.CHARACTERS.deer.run) * 1.6, "(%.1f m in 2 s)" % gz)
+	# ---------------- chase music and heartbeat
 	_place(400, 520)
-	rival.yaw = -PI * 0.5; rival.rotation.y = rival.yaw
-	var noticed := false
-	for i in 900:
+	await frames(15)
+	var calm_ok: bool = float(Sfx.loop_target["chase"]) == 0.0 and float(Sfx.loop_target["heartbeat"]) == 0.0
+	var chaser: Predator = g.fauna._make_predator("lion", Vector2(414, 520))
+	chaser.last_seen = p.pos2()
+	chaser.engage()
+	var music_on := false
+	var heart_on := false
+	for i in 40:
 		await get_tree().process_frame
-		if rival.state == Predator.STALK or rival.state == Predator.CHASE or rival.state == Predator.ATTACK:
-			noticed = true; break
-	check("a rival lion goes after a cheetah player", noticed)
+		if float(Sfx.loop_target["chase"]) > 0.5: music_on = true
+		if float(Sfx.loop_target["heartbeat"]) > 0.5 and Sfx.loops["heartbeat"].pitch_scale > 1.1: heart_on = true
+	check("being hunted starts the chase music and a fast heartbeat", calm_ok and music_on and heart_on)
+	_quiet()
+	await frames(25)
+	check("chase music and heartbeat stop when the hunt is over", float(Sfx.loop_target["chase"]) == 0.0 and float(Sfx.loop_target["heartbeat"]) == 0.0)
+	# ---------------- clock
+	g.sky.hour = 10.0
+	var h0: float = g.sky.hour
+	var t0: float = g.run_time
+	await secs(6.0)
+	var per_min: float = (g.sky.hour - h0) / (g.run_time - t0) * 60.0
+	check("one real minute is one game hour (a day lasts 24 minutes)", D.DAY_LENGTH == 1440.0 and absf(per_min - 1.0) < 0.1, "(%.2f h per minute)" % per_min)
+	g.menus.open("character")
+	check("character screen opens", g.menus.current == "character")
 	g.to_menu()
-	Save.d.side = "prey"; Save.d.char.prey = "deer"
+	Save.d.char = "deer"
 	g.show_character()
-	check("switching back to the deer works", p.species == "deer" and not p.hunter)
+	check("switching back to the deer works", p.species == "deer")
+	check("playing as a predator is gone: only plant-eaters are playable", not D.CHARACTERS.has("lion") and not ("hunter" in p))
 
 func _mem() -> String:
 	return "static %.1f MB, objects %d, nodes %d, orphans %d" % [OS.get_static_memory_usage() / 1048576.0, Performance.get_monitor(Performance.OBJECT_COUNT),
