@@ -23,10 +23,9 @@ You are a deer in a jungle full of hunters. Landscape, touch only, built for low
 
 An **iOS** preset is included as well; exporting it needs a Mac with Xcode and your Apple team ID.
 
-## Choose your animal
+## How it plays
 
-Main menu -> **Choose animal**: deer, gazelle, boar, goat or buffalo. All play the same levels; they differ in speed,
-health, stamina and jump. (Playing as a predator was tried and removed.)
+You always play the deer. (Playing as a predator or as other animals was tried and removed.)
 
 One real minute is one game hour, so a full day lasts 24 minutes. Later levels start later in the day so that dusk
 and night still fall inside them; endless mode starts at 15:00.
@@ -86,7 +85,7 @@ All tests start the real game scene and drive it (no display or GPU needed):
 
 ```
 godot --headless --path . --import          # once
-godot --headless --path . -- --test         # 147 feature checks, exit code 0 = all passed
+godot --headless --path . -- --test         # 143 feature checks, exit code 0 = all passed
 godot --headless --path . -- --test-perf    # draw-call / triangle budget at 24 view points per preset
 godot --headless --path . -- --soak=600     # a bot plays for 600 s and prints memory, objects, orphan nodes
 ```

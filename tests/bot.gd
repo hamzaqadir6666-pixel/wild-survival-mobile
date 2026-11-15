@@ -651,30 +651,11 @@ func _tests_hunter() -> void:
 		worst_near = mini(worst_near, near)
 	check("wildlife: animals stand within 60 m of every start", worst_near >= 5, "(fewest in 6 starts: %d)" % worst_near)
 	_quiet()
-	# ---------------- prey characters
 	g.to_menu()
-	var stats_ok := true
-	for sp in D.CHAR_ORDER:
-		Save.d.char = sp
-		g.start_level(0)
-		await frames(2)
-		_quiet()
-		if p.species != sp or absf(p.max_health - float(D.CHARACTERS[sp].hp)) > 0.01 or p.model == null or p.anim == null: stats_ok = false
-		g.to_menu()
-	check("5 playable animals load with their own model and stats", stats_ok and D.CHAR_ORDER.size() == 5)
-	Save.d.char = "gazelle"
 	g.start_level(0)
 	await frames(2)
 	_quiet()
 	var c: TouchControls = g.controls
-	_place(400, 520)
-	g.cam_yaw = 0.0
-	c.move = Vector2(0, 1); c.sprint = true
-	var p0 := p.pos2()
-	await secs(2.0)
-	var gz := p.pos2().distance_to(p0)
-	c.move = Vector2.ZERO; c.sprint = false
-	check("gazelle sprints faster than the deer", gz > float(D.CHARACTERS.deer.run) * 1.6, "(%.1f m in 2 s)" % gz)
 	# ---------------- chase music and heartbeat
 	_place(400, 520)
 	await frames(15)
@@ -834,13 +815,11 @@ func _tests_hunter() -> void:
 	await secs(6.0)
 	var per_min: float = (g.sky.hour - h0) / (g.run_time - t0) * 60.0
 	check("one real minute is one game hour (a day lasts 24 minutes)", D.DAY_LENGTH == 1440.0 and absf(per_min - 1.0) < 0.1, "(%.2f h per minute)" % per_min)
-	g.menus.open("character")
-	check("character screen opens", g.menus.current == "character")
-	g.to_menu()
-	Save.d.char = "deer"
-	g.show_character()
-	check("switching back to the deer works", p.species == "deer")
-	check("playing as a predator is gone: only plant-eaters are playable", not D.CHARACTERS.has("lion") and not ("hunter" in p))
+	g.menus.open("main")
+	var has_choose := false
+	for bt in g.menus.find_children("*", "Button", true, false):
+		if (bt as Button).text.contains("Choose animal"): has_choose = true
+	check("the player is always the deer: no animal chooser in the menu", not has_choose and Save.character() == "deer" and p.species == "deer" and D.CHARACTERS.size() == 1)
 
 func _mem() -> String:
 	return "static %.1f MB, objects %d, nodes %d, orphans %d" % [OS.get_static_memory_usage() / 1048576.0, Performance.get_monitor(Performance.OBJECT_COUNT),

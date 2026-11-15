@@ -114,7 +114,7 @@ func back_pressed() -> void:
 	## Android back button / Escape
 	match current:
 		"main": pass
-		"levels", "howto", "stats", "achievements", "guide", "character": open("main" if not game.in_run() else "pause")
+		"levels", "howto", "stats", "achievements", "guide": open("main" if not game.in_run() else "pause")
 		"settings": open("main" if not game.in_run() else "pause")
 		"pause", "map": game.resume()
 		"tutorial": pass
@@ -123,7 +123,6 @@ func back_pressed() -> void:
 # ---------------------------------------------------------------- main menu
 func _build_main() -> void:
 	var v := _frame("WILD SURVIVAL", 520.0)
-	var s := _text(v, "Playing as: %s" % D.SPECIES[Save.character()].name, 17, Color(0.8, 0.95, 0.8)); s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var g := GridContainer.new()
 	g.columns = 2
 	g.add_theme_constant_override("h_separation", 10)
@@ -132,46 +131,16 @@ func _build_main() -> void:
 	var lvl := mini(int(Save.d.unlocked), D.LEVELS.size())
 	var sz := Vector2(244, 58)
 	g.add_child(UI.button("Continue: Level %d" % lvl, func(): game.start_level(lvl - 1), 21, sz, "play"))
-	g.add_child(UI.button("Choose animal", func(): open("character"), 21, sz, "paw"))
 	g.add_child(UI.button("Level select", func(): open("levels"), 21, sz, "flag"))
 	g.add_child(UI.button("Endless mode", func(): game.start_endless(), 21, sz, "clock"))
 	g.add_child(UI.button("How to play", func(): open("howto"), 21, sz, "eye"))
 	g.add_child(UI.button("Animal & plant guide", func(): open("guide"), 19, sz, "leaf"))
 	g.add_child(UI.button("Statistics", func(): open("stats"), 21, sz, "star"))
 	g.add_child(UI.button("Achievements", func(): open("achievements"), 21, sz, "shield"))
-	var h := _row(v)
-	h.add_child(UI.button("Settings", func(): open("settings"), 21, sz, "gear"))
+	g.add_child(UI.button("Settings", func(): open("settings"), 21, sz, "gear"))
 	var best := float(Save.d.best_endless)
 	if best > 0.0:
 		var b := _text(v, "Endless best: %s" % D.fmt_time(best), 16, UI.GOLD); b.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-
-## which animal to play
-func _build_character() -> void:
-	var v := _frame("CHOOSE YOUR ANIMAL", 800.0)
-	_text(v, "Every animal plays the same levels. They differ in speed, health, stamina and jump.", 16, Color(0.85, 0.9, 0.85), 740.0).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var g := GridContainer.new()
-	g.columns = 3
-	g.add_theme_constant_override("h_separation", 8)
-	g.add_theme_constant_override("v_separation", 8)
-	v.add_child(g)
-	var cur := Save.character()
-	for sp in D.CHAR_ORDER:
-		var c: Dictionary = D.CHARACTERS[sp]
-		var name_: String = sp
-		var line := "%s\nSpeed %d  Health %d  Stamina %d" % [D.SPECIES[sp].name, int(round(float(c.run) * 10.0)), int(c.hp), int(c.stamina)]
-		var b2 := UI.button(line, func(): _pick(name_), 15, Vector2(250, 66))
-		if sp == cur: b2.add_theme_stylebox_override("normal", UI.box(Color(0.6, 0.5, 0.15, 1.0), 12, 10))
-		g.add_child(b2)
-	_text(v, "%s: %s" % [D.SPECIES[cur].name, D.CHARACTERS[cur].text], 17, UI.GOLD, 740.0).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var h2 := _row(v)
-	h2.add_child(UI.button("Back", func(): open("main"), 20, Vector2(200, 58), "back"))
-	h2.add_child(UI.button("Play", func(): game.start_level(mini(int(Save.d.unlocked), D.LEVELS.size()) - 1), 20, Vector2(200, 58), "play"))
-
-func _pick(sp: String) -> void:
-	Save.d.char = sp
-	Save.store()
-	game.show_character()
-	open("character")
 
 func _build_levels() -> void:
 	var v := _frame("LEVELS", 640.0)

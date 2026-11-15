@@ -37,7 +37,6 @@ func unlock(ach: String) -> bool:
 	d.ach[ach] = true
 	return true
 
-## the animal chosen in the menu
+## the player is always the deer (older saves may still name another animal)
 func character() -> String:
-	var c := str(d.get("char", "deer"))
-	return c if D.CHARACTERS.has(c) else "deer"
+	return "deer"

@@ -352,16 +352,9 @@ func _process(delta: float) -> void:
 	if state == MENU:
 		# slow fly-around behind the menu
 		cam_yaw += dt * 0.05
-		if menus.current == "character":
-			# close-up of the chosen animal
-			var pp := player.position
-			camera.position = pp + Vector3(sin(cam_yaw * 6.0) * 5.5, 2.2, cos(cam_yaw * 6.0) * 5.5)
-			camera.look_at(pp + Vector3(0, 0.9, 0), Vector3.UP)
-			player.play("idle")
-		else:
-			var c := Vector3(400.0 + sin(cam_yaw) * 60.0, 0, 520.0 + cos(cam_yaw) * 60.0)
-			camera.position = Vector3(c.x, maxf(World.height(c.x, c.z), 0.0) + 16.0, c.z)
-			camera.look_at(Vector3(400, 4, 520), Vector3.UP)
+		var c := Vector3(400.0 + sin(cam_yaw) * 60.0, 0, 520.0 + cos(cam_yaw) * 60.0)
+		camera.position = Vector3(c.x, maxf(World.height(c.x, c.z), 0.0) + 16.0, c.z)
+		camera.look_at(Vector3(400, 4, 520), Vector3.UP)
 		sky.update(0.0, camera.position)
 		vegetation.update_visibility(camera.position)
 		grass.update(camera.position)

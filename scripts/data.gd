@@ -45,15 +45,10 @@ const PREY_ORDER := ["gazelle", "boar", "goat", "buffalo", "fox", "junglefowl"]
 # which animals live at herd home number i (repeats)
 const HERD_ORDER := ["gazelle", "boar", "goat", "buffalo", "fox", "junglefowl", "gazelle", "elephant", "boar", "goat", "gazelle", "rhino", "buffalo", "junglefowl"]
 
-# playable animals.  walk / run in m/s
+# the player is always the deer.  walk / run in m/s
 const CHARACTERS := {
-	"deer": {"walk": 4.1, "run": 10.0, "hp": 100.0, "stamina": 100.0, "jump": 1.0, "text": "Balanced. The classic choice."},
-	"gazelle": {"walk": 4.3, "run": 11.6, "hp": 70.0, "stamina": 110.0, "jump": 1.15, "text": "Fastest runner, but fragile."},
-	"boar": {"walk": 3.6, "run": 8.5, "hp": 145.0, "stamina": 90.0, "jump": 0.8, "text": "Slow and tough."},
-	"goat": {"walk": 3.8, "run": 9.2, "hp": 90.0, "stamina": 135.0, "jump": 1.35, "text": "Great stamina and the highest jump."},
-	"buffalo": {"walk": 3.5, "run": 8.0, "hp": 210.0, "stamina": 80.0, "jump": 0.7, "text": "Slowest, but takes a lot of bites."},
+	"deer": {"walk": 4.1, "run": 10.0, "hp": 100.0, "stamina": 100.0, "jump": 1.0},
 }
-const CHAR_ORDER := ["deer", "gazelle", "boar", "goat", "buffalo"]
 
 # rare plants: mesh, tint, glow colour, model scale
 const PLANTS := {
