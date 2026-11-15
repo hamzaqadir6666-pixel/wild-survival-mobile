@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Windows 7 Aero Explorer for Windows 10 &mdash; downloads</title>
+<link rel="stylesheet" href="preview.css" />
+<link rel="icon" href="assets/aero_explorer.png" />
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <p class="eyebrow">Native Win32 &middot; x64 &middot; no Electron, no .NET</p>
+      <h1>Windows&nbsp;7 Aero Explorer<br /><span>for Windows&nbsp;10 &amp; 11</span></h1>
+      <p class="lede">
+        The Explorer you remember, rebuilt as a single small executable: Aero glass chrome,
+        glowing back / forward orbs, breadcrumb address bar, drive capacity bars, details pane,
+        five view modes &mdash; plus <strong>built-in FTP</strong> that behaves just like local folders.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/download/AeroExplorerSetup.exe" download>
+          <span class="btn-icon">&#x2B07;</span>
+          <span><strong>Download Setup</strong><small>AeroExplorerSetup.exe &middot; <span data-size="setup">1.6 MB</span></small></span>
+        </a>
+        <a class="btn" href="/download/AeroExplorer.exe" download>
+          <span class="btn-icon">&#x1F5C2;</span>
+          <span><strong>Portable .exe</strong><small>AeroExplorer.exe &middot; <span data-size="portable">1.2 MB</span></small></span>
+        </a>
+      </div>
+      <p class="fineprint">
+        Windows 10 / 11 64-bit &middot; Setup needs administrator rights &middot; MIT licensed &middot;
+        <a href="/download/SHA256SUMS.txt">SHA-256 checksums</a>
+      </p>
+    </div>
+    <div class="hero-art">
+      <img src="assets/aero_explorer.png" alt="Windows 7 Aero Explorer icon" />
+      <div class="glow"></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="section">
+    <div class="section-head">
+      <h2>Try it right here</h2>
+      <p>
+        A faithful HTML mock of the real window &mdash; same layout, same chrome, same FTP flow.
+        Click <em>Computer</em>, open a drive, or connect to the demo FTP server with the
+        <strong>FTP</strong> button. Use the address bar breadcrumbs to walk back up.
+      </p>
+    </div>
+
+    <div class="explorer" id="explorer">
+      <div class="title-bar">
+        <div class="title-text" id="window-title">Computer &mdash; Windows 7 Aero Explorer</div>
+        <div class="caption-buttons">
+          <span class="cap cap-min"></span><span class="cap cap-max"></span><span class="cap cap-close"></span>
+        </div>
+      </div>
+
+      <div class="nav-band">
+        <button class="orb orb-back" id="btn-back" title="Back (Alt+Left)" aria-label="Back"></button>
+        <button class="orb orb-fwd" id="btn-forward" title="Forward (Alt+Right)" aria-label="Forward"></button>
+        <button class="orb orb-up" id="btn-up" title="Up one level (Alt+Up)" aria-label="Up"></button>
+
+        <div class="address-box" id="address-box">
+          <div class="crumbs" id="crumbs"></div>
+          <div class="address-progress" id="address-progress"></div>
+        </div>
+
+        <div class="search-box">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.6" cy="6.6" r="4.2"></circle><line x1="9.8" y1="9.8" x2="14" y2="14"></line></svg>
+          <input id="search-input" type="search" placeholder="Search" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="command-bar">
+        <button class="cmd" id="cmd-organize">Organize <span class="caret"></span></button>
+        <button class="cmd" id="cmd-view">View <span class="caret"></span></button>
+        <button class="cmd" id="cmd-ftp">FTP <span class="caret"></span></button>
+        <span class="cmd-sep"></span>
+        <button class="cmd cmd-new" id="cmd-new-folder"><span class="folder-chip"></span>New folder</button>
+        <div class="cmd-right">
+          <span>Include in library <span class="caret"></span></span>
+          <span>Share with <span class="caret"></span></span>
+        </div>
+      </div>
+
+      <div class="body">
+        <aside class="nav-pane">
+          <div class="pane-caption">Favorites &amp; Libraries</div>
+          <div class="tree" id="tree"></div>
+        </aside>
+
+        <section class="file-area">
+          <div class="file-header" id="file-header"></div>
+          <div class="file-scroll" id="file-scroll">
+            <div id="file-canvas"></div>
+            <div class="empty-state" id="empty-state" hidden></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="details-pane" id="details-pane"></div>
+
+      <div class="status-bar">
+        <span id="status-text">Loading&hellip;</span>
+        <span class="status-right" id="status-right">Computer</span>
+        <div class="resize-grip"></div>
+      </div>
+    </div>
+
+    <div class="mock-note">
+      <strong>Note:</strong> the download above is the real native Windows application. This panel is a
+      browser-side demo of the same UI so you can explore the workflow without installing anything.
+    </div>
+  </section>
+
+  <section class="section split">
+    <div>
+      <h2>Setup wizard</h2>
+      <p class="muted">
+        A genuine Windows&nbsp;7 style installer: banner page, MIT license, browseable destination folder
+        with free-space check, component selection, CRC-verified extraction, and a finish page that can
+        launch the app. It registers Apps &amp; Features, shortcuts and the folder context menu, and can
+        run unattended with <code>/S</code>.
+      </p>
+      <div class="wizard" id="wizard">
+        <div class="wizard-banner">
+          <div class="banner-title">Windows&nbsp;7<br />Aero Explorer</div>
+          <div class="banner-sub">Setup</div>
+          <img src="assets/setup_icon.png" alt="" />
+        </div>
+        <div class="wizard-panel">
+          <div class="wizard-head">
+            <h3 id="wizard-title">Welcome to the Setup Wizard</h3>
+            <p id="wizard-sub">This wizard will install Windows 7 Aero Explorer on your computer.</p>
+          </div>
+          <div class="wizard-body" id="wizard-body"></div>
+          <div class="wizard-foot">
+            <span class="wizard-brand"><img src="assets/setup_icon.png" alt="" /> Windows 7 Aero Explorer 1.0.0</span>
+            <div class="wizard-buttons">
+              <button id="wiz-back">Back</button>
+              <button id="wiz-next" class="primary">Next</button>
+              <button id="wiz-cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2>FTP, done properly</h2>
+      <ul class="feature-list">
+        <li><strong>Address-bar native.</strong> Type <code>ftp://user:pass@host:21/path</code> and press Enter.</li>
+        <li><strong>Saved sites.</strong> The FTP Connection Manager (<kbd>Ctrl</kbd>+<kbd>K</kbd>) keeps bookmarks with obfuscated passwords in <code>%APPDATA%\AeroExplorer\ftp_sites.ini</code>.</li>
+        <li><strong>Real transfers.</strong> Streaming WinINet uploads and downloads on a worker thread with live progress painted into the address bar &mdash; the UI never freezes.</li>
+        <li><strong>Folder operations.</strong> Create, rename and recursively delete remote folders; recursively download a whole tree.</li>
+        <li><strong>Drag &amp; drop.</strong> Drop files from Windows Explorer onto a remote folder to upload them.</li>
+        <li><strong>Passive mode &amp; FTPS.</strong> Works behind NAT/firewalls; optional explicit TLS.</li>
+      </ul>
+
+      <h2>What is inside</h2>
+      <table class="specs">
+        <tbody>
+          <tr><th>Binary</th><td>x64 native PE32+ GUI, statically linked C++ runtime</td></tr>
+          <tr><th>Rendering</th><td>GDI+ Aero chrome, double-buffered custom canvas</td></tr>
+          <tr><th>Shell integration</th><td>48&times;48 shell icons, context menu, ftp:// handler, Apps &amp; Features entry</td></tr>
+          <tr><th>Keyboard</th><td><kbd>Alt</kbd>+&larr;/&rarr;/&uarr;, <kbd>Alt</kbd>+<kbd>D</kbd>, <kbd>Ctrl</kbd>+<kbd>K</kbd>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>, <kbd>F2</kbd>, <kbd>Del</kbd>, <kbd>F5</kbd></td></tr>
+          <tr><th>Telemetry</th><td>None. No updater, no background service.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section downloads">
+    <h2>Downloads</h2>
+    <div class="cards">
+      <article class="card">
+        <h3>AeroExplorerSetup.exe</h3>
+        <p>The full installer: 6-step wizard, shortcuts, context menu, uninstaller entry.</p>
+        <a class="btn btn-primary" href="/download/AeroExplorerSetup.exe" download>Download installer</a>
+        <code class="hash" data-hash="setup">loading&hellip;</code>
+      </article>
+      <article class="card">
+        <h3>AeroExplorer.exe</h3>
+        <p>Portable single executable. Run it from anywhere &mdash; no install, no registry writes except your saved FTP sites.</p>
+        <a class="btn" href="/download/AeroExplorer.exe" download>Download portable</a>
+        <code class="hash" data-hash="portable">loading&hellip;</code>
+      </article>
+      <article class="card">
+        <h3>AeroExplorer-portable.zip</h3>
+        <p>Explorer, uninstaller and the README bundled together for offline machines.</p>
+        <a class="btn" href="/download/AeroExplorer-portable.zip" download>Download ZIP</a>
+        <code class="hash" data-hash="zip">loading&hellip;</code>
+      </article>
+    </div>
+    <p class="fineprint center">
+      Windows SmartScreen may warn about an unsigned binary &mdash; choose <em>More info</em> &rarr;
+      <em>Run anyway</em>, or verify the SHA-256 above.
+    </p>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <span>Windows 7 Aero Explorer &middot; MIT licensed &middot; built with Zig + Win32 + GDI+</span>
+  <span>Not affiliated with Microsoft. &ldquo;Windows&rdquo; is a trademark of Microsoft Corporation.</span>
+</footer>
+
+<script src="preview.js"></script>
+</body>
+</html>

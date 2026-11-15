@@ -1,0 +1,11 @@
+# Build intermediates (deliverables live in releases/)
+build/
+*.res
+*.pdb
+*.o
+*.obj
+__pycache__/
+
+# Generated payload injected into the setup resources before compilation
+src/installer/aeroexplorer_payload.bin
+src/installer/aeroexplorer_payload.res

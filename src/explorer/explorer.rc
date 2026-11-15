@@ -1,0 +1,104 @@
+#include <winresrc.h>
+#include "resource.h"
+#pragma code_page(65001)
+
+// Application Icon & Manifest
+IDI_APP_ICON ICON "../../assets/aero_explorer.ico"
+1 RT_MANIFEST "../common/app_manifest.xml"
+
+// Version Metadata
+1 VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0x0L
+FILEOS 0x40004L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "AeroExplorer Open Source Project"
+            VALUE "FileDescription", "Windows 7 Style File Explorer for Windows 10 with FTP Support"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "AeroExplorer"
+            VALUE "LegalCopyright", "Copyright (c) 2026 AeroExplorer Project (MIT License)"
+            VALUE "OriginalFilename", "AeroExplorer.exe"
+            VALUE "ProductName", "Windows 7 Aero Explorer"
+            VALUE "ProductVersion", "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+// FTP Site Manager & Quick Connect Dialog
+IDD_FTP_MANAGER DIALOGEX 0, 0, 396, 236
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "FTP Connection Manager - Windows 7 Aero Explorer"
+FONT 9, "Segoe UI"
+BEGIN
+    GROUPBOX        "Saved FTP Sites", 3001, 8, 7, 134, 198
+    LISTBOX         IDC_FTP_LIST, 14, 20, 122, 154, LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "New", IDC_FTP_NEW_PROFILE, 14, 180, 38, 18
+    PUSHBUTTON      "Save", IDC_FTP_SAVE_PROFILE, 56, 180, 38, 18
+    PUSHBUTTON      "Delete", IDC_FTP_DELETE_PROFILE, 98, 180, 38, 18
+
+    GROUPBOX        "Connection Settings", 3002, 148, 7, 240, 198
+    LTEXT           "Bookmark Title:", 3003, 158, 23, 68, 10
+    EDITTEXT        IDC_FTP_PROFILE_NAME, 230, 20, 148, 14, ES_AUTOHSCROLL
+
+    LTEXT           "FTP Host / IP:", 3004, 158, 43, 68, 10
+    EDITTEXT        IDC_FTP_HOST, 230, 40, 102, 14, ES_AUTOHSCROLL
+    LTEXT           "Port:", 3005, 336, 43, 18, 10
+    EDITTEXT        IDC_FTP_PORT, 356, 40, 22, 14, ES_NUMBER | ES_AUTOHSCROLL
+
+    AUTOCHECKBOX    "Anonymous login (no password required)", IDC_FTP_ANON, 230, 60, 150, 12
+
+    LTEXT           "Username:", 3006, 158, 79, 68, 10
+    EDITTEXT        IDC_FTP_USER, 230, 76, 148, 14, ES_AUTOHSCROLL
+
+    LTEXT           "Password:", 3007, 158, 99, 68, 10
+    EDITTEXT        IDC_FTP_PASS, 230, 96, 148, 14, ES_PASSWORD | ES_AUTOHSCROLL
+
+    LTEXT           "Remote Folder:", 3008, 158, 119, 68, 10
+    EDITTEXT        IDC_FTP_PATH, 230, 116, 148, 14, ES_AUTOHSCROLL
+
+    AUTOCHECKBOX    "Use Passive Mode (PASV - recommended for firewalls/NAT)", IDC_FTP_PASSIVE, 158, 140, 220, 12
+    AUTOCHECKBOX    "Explicit FTPS / TLS when supported", IDC_FTP_FTPS, 158, 156, 180, 12
+
+    LTEXT           "Tip: You can also type ftp://user:pass@host/path directly in the Explorer address bar, or drag && drop files from Windows 10 into any open FTP folder.", 3009, 158, 173, 222, 26
+
+    DEFPUSHBUTTON   "Connect", IDOK, 274, 212, 54, 18
+    PUSHBUTTON      "Cancel", IDCANCEL, 334, 212, 54, 18
+END
+
+// Generic Input Prompt Dialog (New Folder / Rename)
+IDD_INPUT_PROMPT DIALOGEX 0, 0, 264, 86
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Windows 7 Aero Explorer"
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT           "Enter name:", IDC_PROMPT_LABEL, 10, 10, 244, 18
+    EDITTEXT        IDC_PROMPT_EDIT, 10, 32, 244, 15, ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK", IDOK, 148, 58, 50, 18
+    PUSHBUTTON      "Cancel", IDCANCEL, 204, 58, 50, 18
+END
+
+// About & Keyboard Shortcuts Dialog
+IDD_ABOUT DIALOGEX 0, 0, 310, 190
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About Windows 7 Aero Explorer"
+FONT 9, "Segoe UI"
+BEGIN
+    ICON            IDI_APP_ICON, 3020, 12, 12, 21, 21
+    LTEXT           "Windows 7 Aero Explorer v1.0.0 (64-bit)", 3021, 44, 12, 250, 12
+    LTEXT           "Classic Windows 7 Explorer experience crafted natively for Windows 10/11 with integrated multi-threaded FTP support.", 3022, 44, 26, 252, 22
+    GROUPBOX        "Highlights && Shortcuts", 3023, 12, 54, 286, 102
+    LTEXT           "• Alt+Left / Alt+Right / Alt+Up : Back, Forward, Up One Level\n• Alt+D or Ctrl+L : Edit Address Bar (local path or ftp:// URL)\n• Ctrl+K : Open FTP Connection Manager\n• Ctrl+Shift+N : Create New Folder (Local or FTP)\n• F2 / Del / F5 : Rename, Delete, Refresh\n• Drag && Drop files onto an FTP folder to upload automatically!", 3024, 20, 68, 270, 80
+    DEFPUSHBUTTON   "OK", IDOK, 244, 164, 54, 18
+END
