@@ -892,6 +892,10 @@ func _tests_hunter() -> void:
 	check("loading sound: a loop while loading and a chime when ready", Sfx.loops.has("loading") and Sfx.streams.has("ready") and float(Sfx.loop_target["loading"]) == 0.0)
 	var icon_tex: Texture2D = load("res://icon.png")
 	check("app icon is the 512 px elk artwork", icon_tex.get_width() == 512 and icon_tex.get_height() == 512)
+	var veg_ok: bool = g.vegetation.meshes.size() == Vegetation.TYPES.size() and g.vegetation.progress() >= 0.999
+	for k in g.vegetation.meshes: veg_ok = veg_ok and g.vegetation.meshes[k] != null
+	check("plant models load a few per frame and all arrive", veg_ok)
+	check("loading keeps a breadcrumb log for crash reports (off in tests)", g.has_method("crumb") and g.last_fail == "" and g.load_fail_label.visible == false)
 	var has_exit := false
 	for bt in g.menus.find_children("*", "Button", true, false):
 		if (bt as Button).text.contains("Exit game"): has_exit = true

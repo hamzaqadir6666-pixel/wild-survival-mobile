@@ -23,9 +23,11 @@ var controls: TouchControls
 var menus: Menus
 var loading: Control
 var load_art: TextureRect
+var load_fail_label: Label
 var load_tip: Label
 var load_pct: Label
 var load_time := 0.0
+var _done_frames := 0
 var load_shown := 0.0
 var load_tip_i := 0
 var load_tip_0 := randi() % 8
@@ -104,6 +106,33 @@ func _build_ui() -> void:
 	menus = Menus.new(); menus.game = self
 	ui_root.add_child(menus)
 	_build_loading()
+	_crumb_start()
+
+## ---- loading breadcrumbs: every loading stage is written to user://boot.log before it runs. If the
+## app dies while loading, the next start reads the last line, shows it on the loading screen and
+## starts on the lightest settings.
+const CRUMB_PATH := "user://boot.log"
+var _crumb_file: FileAccess
+var last_fail := ""
+
+func _crumb_start() -> void:
+	if Cfg.test_mode: return
+	if FileAccess.file_exists(CRUMB_PATH):
+		var lines := FileAccess.get_file_as_string(CRUMB_PATH).strip_edges().split("\n")
+		if lines.size() > 0 and lines[-1] != "" and lines[-1] != "done": last_fail = lines[-1]
+	_crumb_file = FileAccess.open(CRUMB_PATH, FileAccess.WRITE)
+	crumb("start  %s  %s  %s  %d MB  build %s" % [OS.get_model_name(), OS.get_name() + " " + OS.get_version(), RenderingServer.get_video_adapter_name(), int(OS.get_memory_info().get("physical", 0)) / 1048576, ProjectSettings.get_setting("application/config/version", "")])
+	if last_fail != "":
+		Cfg.preset = 0
+		Cfg.over.clear()
+		Cfg.save_file()
+		load_fail_label.text = "Last start stopped at: %s.  Now using the lightest settings." % last_fail
+		load_fail_label.visible = true
+
+func crumb(what: String) -> void:
+	if _crumb_file == null: return
+	_crumb_file.store_line(what)
+	_crumb_file.flush()
 
 const LOAD_TIPS := [
 	"A hunter that sees you will not give up. Get out of sight.",
@@ -163,6 +192,10 @@ func _build_loading() -> void:
 	v.add_child(sub)
 	var gap := Control.new(); gap.custom_minimum_size = Vector2(0, 18)
 	v.add_child(gap)
+	load_fail_label = UI.label("", 14, Color(1.0, 0.6, 0.5))
+	load_fail_label.visible = false
+	load_fail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(load_fail_label)
 	load_tip = UI.label("Tip: " + LOAD_TIPS[randi() % LOAD_TIPS.size()], 17, Color(1.0, 0.93, 0.7))
 	v.add_child(load_tip)
 	var row := HBoxContainer.new()
@@ -243,10 +276,13 @@ func _loading_step() -> void:
 	match _load_step:
 		0:
 			load_label.text = "Reading the map..."
+			crumb("reading the map")
 			World.load_data()
 			_load_step = 1
 		1:
+			crumb("terrain setup")
 			terrain = Terrain.new(); add_child(terrain); terrain.setup()
+			crumb("terrain chunks")
 			_load_step = 2
 		2:
 			load_label.text = "Shaping the land..."
@@ -256,18 +292,29 @@ func _loading_step() -> void:
 					break
 			load_bar.value = 5.0 + 30.0 * terrain.built / float(terrain.total())
 		3:
+			load_label.text = "Filling the rivers..."
+			crumb("water")
 			water = Water.new(); add_child(water); water.build()
+			load_bar.value = 36.0
+			_load_step = 30
+		30:
+			load_label.text = "Lighting the sky..."
+			crumb("sky and sun")
 			sky = SkyRig.new(); add_child(sky); sky.setup()
 			load_bar.value = 38.0
 			_load_step = 4
 		4:
 			load_label.text = "Growing the forest..."
-			vegetation = Vegetation.new(); add_child(vegetation); vegetation.setup()
+			crumb("forest setup")
+			vegetation = Vegetation.new(); add_child(vegetation)
+			vegetation.note = crumb
+			vegetation.setup()
 			_load_step = 5
 		5:
 			if not vegetation.build_some(14): _load_step = 6
 			load_bar.value = 40.0 + 35.0 * vegetation.progress()
 		6:
+			crumb("grass, plants and the elk")
 			grass = Grass.new(); add_child(grass); grass.setup(vegetation.material)
 			plants = Plants.new(); add_child(plants); plants.setup()
 			player = Player.new(); add_child(player); player.setup_player(Save.character())
@@ -281,6 +328,7 @@ func _loading_step() -> void:
 		7:
 			load_label.text = "Waking the animals..."
 			if fauna == null:
+				crumb("animals")
 				fauna = Fauna.new(); add_child(fauna); fauna.setup(player, sky)
 				fauna.deer_hit.connect(_on_deer_hit)
 				fauna.escaped.connect(_on_escaped)
@@ -293,18 +341,22 @@ func _loading_step() -> void:
 			if fauna.build_some(12): _load_step = 8
 			load_bar.value = 80.0 + 18.0 * minf(1.0, fauna.prey.size() / 140.0)
 		8:
+			crumb("fawn")
 			fawn = Animal.new(); add_child(fawn); fawn.setup("fawn")
 			var fp: Array = World.info.fawn
 			fawn.place(fp[0], fp[1])
 			load_bar.value = 100.0
 			_load_step = 9
 		9:
+			crumb("first view")
 			state = MENU
 			_finish_loading()
 			sky.reset(9.0)
 			apply_quality()
 			Sfx.start_music()
 			menus.open("main")
+			_load_step = 10
+			_done_frames = 0
 
 # ------------------------------------------------------------------ run control
 func in_run() -> bool:
@@ -436,6 +488,12 @@ func _process(delta: float) -> void:
 		if state == LOADING:
 			_loading_anim(delta)
 		return
+	if _crumb_file != null:
+		# the world has been drawn for a few frames without trouble: loading counts as finished
+		_done_frames += 1
+		if _done_frames > 20:
+			crumb("done")
+			_crumb_file = null
 	var dt := minf(delta, 0.1)
 	if state == MENU:
 		# slow fly-around behind the menu

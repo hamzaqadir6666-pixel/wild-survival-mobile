@@ -14,6 +14,18 @@ SR = 22050
 def art():
     src = 'assets_src/art'
     im = Image.open(f'{src}/loading.png').convert('RGB')
+    # the generated picture has a hard-edged darker strip along the bottom; fade the rows above into it
+    a = np.asarray(im).astype(np.float32)
+    lum = a.mean(2)
+    edge = int(np.argmax(np.abs(np.diff(lum[500:640].mean(1)))) + 501)
+    ratio = (lum[edge + 3:edge + 15].mean(0) + 2.0) / (lum[edge - 14:edge - 2].mean(0) + 2.0)
+    k = np.ones(81) / 81.0
+    ratio = np.clip(np.convolve(np.pad(ratio, 40, mode='edge'), k, mode='valid'), 0.2, 1.0)
+    span = 150
+    t = np.clip((np.arange(a.shape[0]) - (edge - span)) / span, 0.0, 1.0)
+    t = np.where(np.arange(a.shape[0]) >= edge, 0.0, t * t * (3 - 2 * t))
+    a *= (1.0 + (ratio[None, :] - 1.0) * t[:, None])[:, :, None]
+    im = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
     w, h = im.size; th = int(round(w * 9 / 16))
     if th <= h: im = im.crop((0, (h - th) // 2, w, (h - th) // 2 + th))
     im.resize((1280, 720), Image.LANCZOS).save('assets/ui/loading.jpg', quality=88)

@@ -24,6 +24,10 @@ var lod2_meshes := {}
 var _data := PackedByteArray()
 var _count := 0
 var _pos := 0
+var _todo: Array = []
+var _types_total := 0
+var _placing := false
+var note := Callable()      # game.gd passes its loading breadcrumb here
 # parallel arrays, one entry per MultiMeshInstance
 var _nodes: Array[MultiMeshInstance3D] = []
 var _far_nodes: Array = []          # lod1 partner or null
@@ -36,6 +40,9 @@ var instance_total := 0
 
 static func mesh_from(path: String) -> Mesh:
 	var scene: PackedScene = load(path)
+	if scene == null:
+		push_error("missing plant model " + path)
+		return null
 	var inst := scene.instantiate()
 	var found: Mesh = null
 	for c in inst.find_children("*", "MeshInstance3D", true, false):
@@ -48,14 +55,10 @@ func setup() -> void:
 	material = ShaderMaterial.new()
 	material.shader = load("res://shaders/veg.gdshader")
 	material.set_shader_parameter("detail", load("res://assets/textures/veg_detail.png"))
-	for t in TYPES:
-		meshes[t] = mesh_from("res://assets/models/nature/%s.glb" % t)
-		var lp := "res://assets/models/nature/%s_lod1.glb" % t
-		if ResourceLoader.exists(lp): lod_meshes[t] = mesh_from(lp)
-		var lp2 := "res://assets/models/nature/%s_lod2.glb" % t
-		if ResourceLoader.exists(lp2): lod2_meshes[t] = mesh_from(lp2)
+	_todo = TYPES.keys()
+	_types_total = _todo.size()
 	_data = FileAccess.get_file_as_bytes("res://assets/world/veg.bin")
-	_count = _data.decode_u32(0)
+	_count = _data.decode_u32(0) if _data.size() >= 4 else 0
 	_pos = 0
 	apply_quality()
 
@@ -66,11 +69,27 @@ func apply_quality() -> void:
 		if _kind[i] == KIND_TREE: _nodes[i].cast_shadow = sh
 
 func progress() -> float:
-	return float(_pos) / maxf(1.0, _count)
+	var m := 1.0 - _todo.size() / maxf(1.0, _types_total)
+	return 0.25 * m + 0.75 * float(_pos) / maxf(1.0, _count)
+
+## loads the meshes of one plant type (a few per frame, so a phone never stalls on all 60 files at once)
+func _load_type(t: String) -> void:
+	if note.is_valid(): note.call("plant model " + t)
+	meshes[t] = mesh_from("res://assets/models/nature/%s.glb" % t)
+	var lp := "res://assets/models/nature/%s_lod1.glb" % t
+	if ResourceLoader.exists(lp): lod_meshes[t] = mesh_from(lp)
+	var lp2 := "res://assets/models/nature/%s_lod2.glb" % t
+	if ResourceLoader.exists(lp2): lod2_meshes[t] = mesh_from(lp2)
 
 ## builds chunk groups for about `budget_ms`; returns false when everything is built
 func build_some(budget_ms: int) -> bool:
 	var t0 := Time.get_ticks_msec()
+	while not _todo.is_empty():
+		_load_type(_todo.pop_front())
+		if Time.get_ticks_msec() - t0 >= budget_ms: return true
+	if not _placing:
+		_placing = true
+		if note.is_valid(): note.call("placing plants")
 	while _pos < _count:
 		_build_group()
 		if Time.get_ticks_msec() - t0 >= budget_ms: break
@@ -103,6 +122,7 @@ func _build_group() -> void:
 		_pos += 1
 	var cx := (ck % 16) * 64.0 + 32.0
 	var cz := (ck / 16) * 64.0 + 32.0
+	if meshes.get(tname) == null: return
 	var near := _make(meshes[tname], xf)
 	near.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if (cfg[0] == KIND_TREE and Cfg.v("shadows")) else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var far = null
