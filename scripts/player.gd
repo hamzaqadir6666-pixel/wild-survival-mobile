@@ -19,6 +19,13 @@ var vy := 0.0
 var air := 0.0                 # height above the ground while jumping
 var swimming := false
 var sprinting := false
+const REST_SIT := 20.0           # seconds standing still before the animal sits down
+const REST_LIE := 45.0           # ... and before it lies down
+var idle_time := 0.0
+var rest := 0
+var rest_t := 0.0
+var flinch := 0.0
+var flinch_clip := "hit"
 const THIRST_TIME := 30.0
 var thirst_left := 0.0          # seconds left to drink once the water bar is empty (0 = not counting)
 var action := ""               # "", "graze", "drink"
@@ -74,6 +81,7 @@ func reset_run(at: Vector2) -> void:
 	cause = ""
 	refresh_abilities()
 	health = max_health; stamina = max_stamina; food = 100.0; water = 100.0; thirst_left = 0.0
+	idle_time = 0.0; rest = 0; flinch = 0.0
 	poison = 0.0; vy = 0.0; air = 0.0; action = ""; exhausted = false; regen_block = 0.0
 	distance_walked = 0.0
 	_warn_food = false; _warn_water = false
@@ -113,6 +121,12 @@ func context() -> String:
 func damage(amount: float, why: String) -> void:
 	if not alive: return
 	health -= amount
+	# flinch (standing, sitting or lying version) unless running for its life
+	if speed < 1.5 and air <= 0.0:
+		flinch = 0.7
+		flinch_clip = "hit_lie" if rest == 2 else ("hit_sit" if rest == 1 else "hit")
+		cur_anim = ""
+	idle_time = 0.0
 	regen_block = 6.0
 	action = ""
 	hurt.emit(amount)
@@ -129,7 +143,8 @@ func die(why: String) -> void:
 	noise = 0.0
 	splash.emitting = false
 	cur_anim = ""
-	play("death")
+	play("death_sit" if rest > 0 and anim != null and anim.has_animation("death_sit") else "death")
+	rest = 0
 	died.emit(why)
 
 func heal(v: float) -> void:
@@ -193,15 +208,17 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 			exhausted = true
 			note.emit("Out of breath!", 1)
 	else:
-		var regen := 9.5 if not moving else 6.0
+		var regen := (16.0 if rest > 0 else 9.5) if not moving else 6.0
 		if swimming: regen = -1.2 if moving else 1.0
 		if food < 20.0 or water < 20.0: regen *= 0.5
 		stamina = clampf(stamina + regen * delta, 0.0, max_stamina)
 		if exhausted and stamina > max_stamina * 0.25: exhausted = false
+	var yaw0 := yaw
 	if moving:
 		var mv := move.normalized()         # x = right, y = forward on the stick
 		var dir := Vector2(cos(cam_yaw) * mv.x - sin(cam_yaw) * mv.y, -sin(cam_yaw) * mv.x - cos(cam_yaw) * mv.y)
 		face(dir, delta, 9.0 if not swimming else 4.5)
+	turn = lerpf(turn, wrapf(yaw - yaw0, -PI, PI) / maxf(delta, 0.001), minf(1.0, delta * 8.0))
 	if speed > 0.02:
 		var f := forward()
 		var nx := position.x + f.x * speed * delta
@@ -263,11 +280,21 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 				Sfx.play("drink", 0.5, randf_range(0.9, 1.1))
 				if water >= 100.0: action = ""; note.emit("Water is full.", 0)
 	elif air > 0.0:
-		play("jump", 1.0)
+		play_jump(2.0 * (7.6 if has("springlily") else 5.6) * sqrt(float(ch.jump)) / GRAVITY)
 	elif in_water:
-		play("walk", 0.9 if speed > 0.3 else 0.35)
+		play("walkslow" if anim.has_animation("walkslow") else "walk", 0.9 if speed > 0.3 else 0.35)
+	elif flinch > 0.0 and speed < 1.5 and anim.has_animation(flinch_clip):
+		play(flinch_clip, 1.6)
+	elif speed < 0.15 and _rest_anim(delta):
+		pass
 	else:
 		locomotion(speed)
+	flinch = maxf(0.0, flinch - delta)
+	# ---- resting: stand still long enough and the animal sits, later lies down ----
+	if speed > 0.15 or action != "" or air > 0.0 or in_water or moving:
+		idle_time = 0.0
+		rest = 0
+	else: idle_time += delta
 	# ---- footsteps ----
 	if speed > 0.3 and air <= 0.0:
 		step_acc += speed * delta
@@ -277,6 +304,29 @@ func update(delta: float, move: Vector2, cam_yaw: float, want_sprint: bool, want
 			if ground < 0.02: _splash_sound(0.35 if not in_water else 0.5)
 			elif not has("ghostfern"):
 				Sfx.play("step%d" % (1 + randi() % 4), 0.12 if sneaking else (0.42 if sprinting else 0.28), randf_range(0.9, 1.15))
+
+## Sitting and lying down. Returns true while a rest clip is in charge of the animation.
+## rest: 0 standing, 1 sitting, 2 lying.  Resting refills stamina faster.
+func _rest_anim(_delta: float) -> bool:
+	if anim == null or not anim.has_animation("sit"): return false
+	if idle_time < REST_SIT: return false
+	if idle_time < REST_LIE:
+		if rest == 0:
+			rest = 1; rest_t = idle_time
+			cur_anim = ""; play("to_sit", 1.3)
+		elif cur_anim == "to_sit" and not anim.is_playing(): play("sit")
+		elif cur_anim == "hit_sit" or cur_anim == "": play("sit")
+		return true
+	if rest != 2:
+		rest = 2
+		cur_anim = ""; play("to_lie", 1.2)
+	elif cur_anim == "to_lie" and not anim.is_playing(): play("lie")
+	elif (cur_anim == "lie" or cur_anim == "lie2") and anim.current_animation_position < 0.05 and idle_time - rest_t > 5.0:
+		# now and then it lifts its head and looks around
+		rest_t = idle_time
+		play("lie2" if cur_anim == "lie" else "lie")
+	elif cur_anim == "hit_lie" or cur_anim == "": play("lie")
+	return true
 
 func begin_context() -> void:
 	var c := context()

@@ -9,7 +9,7 @@ const WILDLIFE_TOTAL := 16
 
 # style: how the hunter behaves.  sight/hear in metres, chase = max seconds of pursuit.
 const SPECIES := {
-	"deer": {"name": "Deer", "model": "deer", "scale": 0.34, "fur": "plain", "pat": Color(0.3, 0.2, 0.12), "pat_k": 0.25, "uv": Vector2(3, 3), "walk": 4.1, "run": 10.0},
+	"deer": {"name": "Deer", "model": "elk", "scale": 0.72, "fur": "plain", "pat": Color(0.3, 0.2, 0.12), "pat_k": 0.25, "uv": Vector2(3, 3), "walk": 4.1, "run": 10.0},
 	"fawn": {"name": "Fawn", "model": "deer", "scale": 0.2, "fur": "fawn", "pat": Color(0.95, 0.92, 0.85), "pat_k": 1.0, "uv": Vector2(2.5, 2.5), "walk": 3.0, "run": 8.0},
 	"lion": {"name": "Lion", "kind": "predator", "tex": "lion", "model": "lion", "scale": 0.37, "fur": "plain", "pat": Color(0.45, 0.3, 0.15), "pat_k": 0.3, "uv": Vector2(3, 3),
 		"walk": 1.6, "run": 10.1, "sight": 34.0, "hear": 1.0, "stalk": 3.0, "charge": 20.0, "chase": 7.0, "memory": 4.0, "dmg": 34.0, "reach": 2.3, "cool": 1.6, "style": "ambush", "sound": "roar", "pitch": 0.62,

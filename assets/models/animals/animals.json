@@ -236,5 +236,83 @@
    "run",
    "walk"
   ]
+ },
+ "elk": {
+  "base": "sketchfab/elk.glb",
+  "native": true,
+  "flip": false,
+  "tris": 7886,
+  "height": 2.0,
+  "length": 2.3,
+  "walk_ref": 1.68,
+  "run_ref": 12.6,
+  "walk_cycle": 1.0,
+  "gaits": [
+   [
+    "sneak",
+    0.573
+   ],
+   [
+    "walkslow",
+    1.176
+   ],
+   [
+    "walk",
+    1.68
+   ],
+   [
+    "trot",
+    7.84
+   ],
+   [
+    "run",
+    12.6
+   ],
+   [
+    "sprint",
+    16.8
+   ]
+  ],
+  "jump": [
+   0.5,
+   1.167
+  ],
+  "clips": [
+   "death",
+   "death_sit",
+   "eat",
+   "hit",
+   "hit_lie",
+   "hit_sit",
+   "idle",
+   "jump",
+   "lie",
+   "lie2",
+   "lie_to_sit",
+   "lie_up",
+   "run",
+   "run_l",
+   "run_r",
+   "sit",
+   "sit_up",
+   "sneak",
+   "sneak_l",
+   "sneak_r",
+   "sprint",
+   "sprint_l",
+   "sprint_r",
+   "to_lie",
+   "to_sit",
+   "trot",
+   "trot_l",
+   "trot_r",
+   "turn_l",
+   "turn_r",
+   "walk",
+   "walk_l",
+   "walk_r",
+   "walkslow",
+   "walkslow_l"
+  ]
  }
 }

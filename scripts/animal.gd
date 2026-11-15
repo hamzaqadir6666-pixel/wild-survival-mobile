@@ -46,6 +46,12 @@ var walk_cycle := 1.0
 var _rate_k := 1.0       # clip substitution: "run" played with the walk clip
 var _pose := ""          # body pose that stands in for a missing clip
 var _pose_tween: Tween
+var parts: Array = []          # every MeshInstance3D of the model
+var loose_attached := 0
+var gaits: Array = []          # [[clip, natural speed in model units], ...] slow -> fast; empty = just walk / run
+var jump_span: Array = []      # [start, end] seconds of the airborne part of the jump clip
+var _gait := ""
+var turn := 0.0                # smoothed turning rate, rad/s (+ = left)
 var leap := 1.0          # height of the pounce pose (the crocodile stays low)
 
 ## removes the model so another species can be set up on the same node
@@ -84,10 +90,20 @@ func setup(sp: String) -> void:
 		add_child(model)
 		anim = model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 		var mis := model.find_children("*", "MeshInstance3D", true, false)
-		if mis.size() > 0:
+		parts.clear()
+		for mi in mis:
+			parts.append(mi)
+			(mi as MeshInstance3D).extra_cull_margin = 1.5
+		if inf.get("native", false):
+			# a model that brings its own textures and several meshes (the elk): keep its materials
+			if mis.size() > 0: mesh_inst = mis[0]
+			_attach_loose(inner)
+		elif mis.size() > 0:
 			mesh_inst = mis[0]
 			mesh_inst.material_override = _material(sp)
-			mesh_inst.extra_cull_margin = 1.0
+		gaits = inf.get("gaits", [])
+		jump_span = inf.get("jump", [])
+		_gait = ""
 		walk_nat = float(inf.walk_ref) * sc
 		run_nat = float(inf.run_ref) * sc
 		body = float(inf.length) * sc * 0.28
@@ -96,13 +112,47 @@ func setup(sp: String) -> void:
 		walk_cycle = float(inf.get("walk_cycle", 1.0))
 		if anim and not _looped.has(cfg.model):
 			_looped[cfg.model] = true
-			for a in ["idle", "idle2", "walk", "run", "eat"]:
+			var loops: Array = ["idle", "idle2", "walk", "run", "eat", "sit", "lie", "lie2"]
+			for gt in gaits:
+				for sfx in ["", "_l", "_r"]: loops.append(str(gt[0]) + sfx)
+			for a in loops:
 				if anim.has_animation(a):
 					anim.get_animation(a).loop_mode = Animation.LOOP_LINEAR
 					Animal.close_loop(anim.get_animation(a))
 		if anim: anim.playback_default_blend_time = 0.18
 	apply_quality()
 	play("idle")
+
+## Meshes that are not skinned (the elk's antlers) sit beside the skeleton in the file, so they would
+## stay behind when the head moves. Hang them on the head bone, keeping their place in the rest pose.
+func _attach_loose(inner: Node3D) -> void:
+	var skel := inner.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skel == null: return
+	var head := -1
+	for i in skel.get_bone_count():
+		if skel.get_bone_name(i).contains("Head"):
+			head = i; break
+	if head < 0: return
+	for mi in parts:
+		var m := mi as MeshInstance3D
+		if m.skin != null: continue
+		var local: Transform3D = (Animal.rel(skel, inner) * skel.get_bone_global_rest(head)).affine_inverse() * Animal.rel(m, inner)
+		var att := BoneAttachment3D.new()
+		skel.add_child(att)
+		att.bone_idx = head
+		m.get_parent().remove_child(m)
+		att.add_child(m)
+		m.transform = local
+		loose_attached += 1
+
+## transform of a node relative to one of its ancestors
+static func rel(n: Node3D, top: Node3D) -> Transform3D:
+	var t := Transform3D.IDENTITY
+	var cur: Node = n
+	while cur != top and cur != null:
+		if cur is Node3D: t = (cur as Node3D).transform * t
+		cur = cur.get_parent()
+	return t
 
 ## Some clips were exported without their closing frame: the last pose is one step short of the first,
 ## so the legs jerk every time the clip wraps. Give those clips one more frame of length; Godot then
@@ -207,7 +257,9 @@ static func bird_fly(ap: AnimationPlayer, rate := 1.0) -> void:
 
 func apply_quality() -> void:
 	var want_blob := not bool(Cfg.v("shadows"))
-	if mesh_inst:
+	for mi in parts:
+		if is_instance_valid(mi): (mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if want_blob else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	if mesh_inst and parts.is_empty():
 		mesh_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if want_blob else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	if want_blob and blob == null:
 		if _blob_mesh == null:
@@ -300,12 +352,57 @@ func _set_pose(p: String) -> void:
 ## picks idle / walk / run and plays it at the rate that matches the ground speed
 func locomotion(spd: float) -> void:
 	if anim == null: return
+	if not gaits.is_empty():
+		_locomotion_gaits(spd); return
 	if spd < 0.15: play("idle")
 	elif is_bird and spd >= run_nat * 0.55:
 		cur_anim = "run"
 		Animal.bird_fly(anim)
 	elif spd < run_nat * 0.55: play("walk", clampf(spd / walk_nat, 0.5, maxf(3.0, walk_cycle / 0.6)))
 	else: play("run", clampf(spd / run_nat, 0.5, 3.0))
+
+## Models with a full set of gaits (the elk: sneak, slow walk, walk, trot, run, sprint, each with
+## left / right turning versions): play the gait whose own stride speed is nearest to the ground
+## speed, at a rate that makes the hooves match the ground.
+func _locomotion_gaits(spd: float) -> void:
+	if spd < 0.15:
+		_gait = ""
+		play("idle"); return
+	var sc: float = model.scale.z
+	var best := ""
+	var best_d := 1e9
+	var best_ref := 1.0
+	for g in gaits:
+		var ref: float = float(g[1]) * sc
+		var dd := absf(log(spd / ref))
+		if str(g[0]) == _gait: dd -= 0.12          # stay in the current gait unless another fits clearly better
+		if dd < best_d:
+			best_d = dd; best = g[0]; best_ref = ref
+	_gait = best
+	var clip := best
+	if turn > 1.1 and anim.has_animation(best + "_l"): clip = best + "_l"
+	elif turn < -1.1 and anim.has_animation(best + "_r"): clip = best + "_r"
+	if cur_anim != clip:
+		# keep the stride phase when changing between versions of the same gait
+		var phase := 0.0
+		if anim.current_animation != "" and cur_anim.begins_with(best): phase = anim.current_animation_position / maxf(anim.current_animation_length, 0.01)
+		_set_pose("")
+		cur_anim = clip
+		anim.play(clip)
+		if phase > 0.0: anim.seek(phase * anim.get_animation(clip).length)
+	anim.speed_scale = clampf(spd / best_ref, 0.55, 2.4)
+
+## the airborne part of the jump clip, stretched over the time in the air
+func play_jump(air_time: float) -> void:
+	if anim == null: return
+	if jump_span.size() < 2 or not anim.has_animation("jump"):
+		play("jump", 1.0); return
+	if cur_anim != "jump":
+		_set_pose("")
+		cur_anim = "jump"
+		anim.play("jump")
+		anim.seek(float(jump_span[0]))
+	anim.speed_scale = (float(jump_span[1]) - float(jump_span[0])) / maxf(air_time, 0.2)
 
 func set_tier(t: int) -> void:
 	if t == tier: return

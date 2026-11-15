@@ -120,6 +120,11 @@ func back_pressed() -> void:
 		"tutorial": pass
 		"gameover", "complete": game.to_menu()
 
+## closes the game (progress is saved first)
+func exit_game() -> void:
+	Save.store()
+	get_tree().quit()
+
 # ---------------------------------------------------------------- main menu
 func _build_main() -> void:
 	var v := _frame("WILD SURVIVAL", 520.0)
@@ -138,6 +143,9 @@ func _build_main() -> void:
 	g.add_child(UI.button("Statistics", func(): open("stats"), 21, sz, "star"))
 	g.add_child(UI.button("Achievements", func(): open("achievements"), 21, sz, "shield"))
 	g.add_child(UI.button("Settings", func(): open("settings"), 21, sz, "gear"))
+	var hx := _row(v)
+	hx.add_child(UI.button("Exit game", exit_game, 21, sz, "back"))
+	var cr := _text(v, "Elk model: WildMesh 3D (CC BY 4.0)  -  Music: Kevin MacLeod, incompetech.com (CC BY 4.0)  -  more in CREDITS.md", 11, Color(0.8, 0.85, 0.8), 500.0); cr.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var best := float(Save.d.best_endless)
 	if best > 0.0:
 		var b := _text(v, "Endless best: %s" % D.fmt_time(best), 16, UI.GOLD); b.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

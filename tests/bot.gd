@@ -119,7 +119,7 @@ func _tests() -> void:
 	await secs(2.0)
 	var walked := p.pos2().distance_to(a)
 	check("walk: moves with the stick", walked > 3.5 and walked < 7.0, "(%.1f m in 2 s)" % walked)
-	check("walk: animation is walk/run, not idle", p.cur_anim == "walk" or p.cur_anim == "run", p.cur_anim)
+	check("walk: animation is walk/run, not idle", p.cur_anim == "walk" or p.cur_anim == "run" or p.cur_anim.begins_with("trot"), p.cur_anim)
 	var st := p.stamina
 	a = p.pos2()
 	c.sprint = true
@@ -350,6 +350,7 @@ func _tests() -> void:
 		if cfg.walk >= an.run_nat * 0.55: rw = cfg.walk / an.run_nat
 		# models without a run clip trot with the walk clip at a capped rate, so only their walk is checked
 		if not an.anim.has_animation("run"): rr = 1.0
+		if not an.gaits.is_empty(): rw = 1.0      # gait models pick the clip that fits: checked in the elk tests
 		if rw < 0.5 or rw > maxf(3.0, an.walk_cycle / 0.6) or rr < 0.5 or rr > 3.0:
 			stride_ok = false; report += " %s rates %.2f/%.2f" % [sp, rw, rr]
 		an.queue_free()
@@ -459,7 +460,6 @@ func _tests() -> void:
 		if gz.state == Prey.FLEE: fled = true; break
 	c.move = Vector2.ZERO; c.sprint = false
 	check("other animals stay calm when the player comes close", not fled)
-	check("background music is the nature loop", Sfx.music.stream.resource_path.ends_with("music.wav") and Sfx.music.stream.get_length() > 60.0)
 	check("wildlife seen counter increases", g.fauna.seen_count() >= 1, "(%d / 16)" % g.fauna.seen_count())
 
 	# ---------------- roaming hunter
@@ -808,6 +808,95 @@ func _tests_hunter() -> void:
 	await frames(3)
 	_quiet()
 	check("the bars are drawn with their numbers", g.hud.has_method("_bar_n"))
+	# ---------------- the elk and its animations
+	g.to_menu(); g.start_level(0)
+	await frames(3)
+	_quiet()
+	var inf: Dictionary = Animal.info()["elk"]
+	var missing: Array = []
+	for cl in inf.clips:
+		if not p.anim.has_animation(cl): missing.append(cl)
+	check("the player is the elk with all its %d clips" % inf.clips.size(), p.cfg.model == "elk" and missing.is_empty() and inf.clips.size() >= 30 and p.parts.size() == 4, str(missing))
+	var antler: MeshInstance3D = null
+	for mi in p.parts:
+		if (mi as MeshInstance3D).skin == null: antler = mi
+	check("antlers ride on the head bone", p.loose_attached == 1 and antler != null and antler.get_parent() is BoneAttachment3D)
+	var root_moves := false
+	for cl in ["walk", "run", "sprint", "trot"]:
+		var an: Animation = p.anim.get_animation(cl)
+		for t in an.get_track_count():
+			if String(an.track_get_path(t)).ends_with(":RigRoot_01") and an.track_get_type(t) == Animation.TYPE_POSITION_3D: root_moves = true
+		if an.loop_mode != Animation.LOOP_LINEAR: root_moves = true
+	check("gait clips loop in place (no root motion)", not root_moves)
+	_place(400, 520)
+	g.cam_yaw = 0.0
+	var seen := {}
+	var rates := {}
+	for step in [["sneak", Vector2(0, 1), false, true, 1.2], ["walk", Vector2(0, 1), false, false, 1.5], ["sprint", Vector2(0, 1), true, false, 1.5]]:
+		_place(400, 520)
+		p.stamina = p.max_stamina
+		c.move = step[1]; c.sprint = step[2]; c.sneak = step[3]
+		await secs(step[4])
+		seen[step[0]] = p.cur_anim
+		rates[step[0]] = p.anim.speed_scale
+	c.move = Vector2.ZERO; c.sprint = false; c.sneak = false
+	check("elk gaits: sneaking walks, walking trots, sprinting gallops", seen.sneak.begins_with("walk") and seen.walk.begins_with("trot") and (seen.sprint.begins_with("run") or seen.sprint.begins_with("sprint")), str(seen))
+	check("hooves keep pace with the ground (clip rate 0.55 - 2.0)", rates.sneak > 0.55 and rates.sneak < 2.0 and rates.walk > 0.55 and rates.walk < 2.0 and rates.sprint > 0.55 and rates.sprint < 2.0, str(rates))
+	# turning uses the left / right versions
+	_place(400, 520)
+	var turned := {}
+	c.sprint = false
+	for i in 90:
+		g.cam_yaw += 0.07
+		c.move = Vector2(0, 1)
+		await get_tree().process_frame
+		if p.cur_anim.ends_with("_l") or p.cur_anim.ends_with("_r"): turned[p.cur_anim] = true
+	for i in 90:
+		g.cam_yaw -= 0.07
+		await get_tree().process_frame
+		if p.cur_anim.ends_with("_l") or p.cur_anim.ends_with("_r"): turned[p.cur_anim] = true
+	c.move = Vector2.ZERO
+	g.cam_yaw = 0.0
+	check("turning plays the left and right versions of the gait", turned.size() >= 2, str(turned.keys()))
+	# jump
+	_place(400, 520)
+	await frames(5)
+	c.jump = true
+	var jumped := false
+	for i in 30:
+		await get_tree().process_frame
+		if p.air > 0.2 and p.cur_anim == "jump": jumped = true
+	c.jump = false
+	await secs(1.0)
+	check("jump plays the airborne part of the jump clip", jumped)
+	# flinch when bitten standing
+	p.health = p.max_health
+	p.damage(5.0, "test")
+	await frames(4)
+	check("a bite makes the standing elk flinch", p.cur_anim == "hit", p.cur_anim)
+	await secs(1.0)
+	# rest: sits, then lies down, and gets up at once when moved
+	p.idle_time = Player.REST_SIT - 0.2
+	await secs(0.6)
+	var sat: bool = p.rest == 1 and (p.cur_anim == "to_sit" or p.cur_anim == "sit")
+	p.stamina = 10.0
+	var st0: float = p.stamina
+	await secs(1.0)
+	var fast_regen: bool = p.stamina - st0 > 13.0
+	p.damage(3.0, "test")
+	await frames(4)
+	var sit_hit: bool = p.cur_anim == "hit_sit"
+	await secs(0.8)
+	p.idle_time = Player.REST_LIE - 0.2
+	await secs(0.6)
+	var lay: bool = p.rest == 2 and (p.cur_anim == "to_lie" or p.cur_anim == "lie")
+	c.move = Vector2(0, 1)
+	await secs(0.5)
+	c.move = Vector2.ZERO
+	check("standing still: the elk sits down, then lies down, and is up again as soon as it moves", sat and lay and p.rest == 0, "(sat %s lay %s rest %d anim %s)" % [sat, lay, p.rest, p.cur_anim])
+	check("resting refills stamina faster; a bite while sitting uses the sitting flinch", fast_regen and sit_hit, "(%s %s)" % [fast_regen, sit_hit])
+	p.health = p.max_health
+	await secs(0.5)
 	# ---------------- clock
 	g.sky.hour = 10.0
 	var h0: float = g.sky.hour
@@ -819,6 +908,14 @@ func _tests_hunter() -> void:
 	var has_choose := false
 	for bt in g.menus.find_children("*", "Button", true, false):
 		if (bt as Button).text.contains("Choose animal"): has_choose = true
+	var has_exit := false
+	for bt in g.menus.find_children("*", "Button", true, false):
+		if (bt as Button).text.contains("Exit game"): has_exit = true
+	check("main menu has an Exit game button", has_exit and g.menus.has_method("exit_game"))
+	check("background music is two recorded tracks played in turn", Sfx.tracks.size() == 2 and Sfx.tracks[0] is AudioStreamMP3 and Sfx.tracks[0].get_length() > 120.0 and Sfx.tracks[1].get_length() > 120.0)
+	var t_before: int = Sfx.track
+	Sfx._next_track()
+	check("when a track ends the next one starts", Sfx.track != t_before and Sfx.music.stream == Sfx.tracks[Sfx.track])
 	check("the player is always the deer: no animal chooser in the menu", not has_choose and Save.character() == "deer" and p.species == "deer" and D.CHARACTERS.size() == 1)
 
 func _mem() -> String:
@@ -963,7 +1060,7 @@ func _perf() -> void:
 				if not _box_in(planes, a.position + Vector3(0, 0.6, 0), Vector3(1.2, 1.0, 1.2)): continue
 				dc += (4 if a.is_bird else 1) + (1 if a.blob != null and a.tier == Animal.TIER_NEAR else 0)
 				tris += 230 if a.is_bird else int(Animal.info()[a.cfg.model].tris)
-			dc += 2; tris += 2100 + 2            # deer + its blob shadow
+			dc += 5; tris += int(Animal.info()["elk"].tris) + 2            # the elk (4 meshes) + its blob shadow
 			dc += 8; tris += 8 * 230             # sky birds (2 hawks at most in view)
 			dc += 1; tris += g.grass.multimesh.visible_instance_count * 9
 			dc += 4; tris += 400                 # sky dome, sun, moon, rain

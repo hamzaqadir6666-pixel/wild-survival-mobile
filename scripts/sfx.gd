@@ -11,6 +11,9 @@ var streams := {}
 var pool: Array[AudioStreamPlayer] = []
 var loops := {}
 var loop_target := {}
+const MUSIC := ["music1", "music2"]      # Enchanted Valley, Ascending the Vale (Kevin MacLeod)
+var tracks: Array = []
+var track := 0
 var music: AudioStreamPlayer
 var _next := 0
 
@@ -31,11 +34,10 @@ func _ready() -> void:
 		var p := AudioStreamPlayer.new(); p.stream = s; p.bus = LOOP_BUS.get(n, "Ambience"); p.volume_db = -60.0; add_child(p)
 		loops[n] = p; loop_target[n] = 0.0
 	music = AudioStreamPlayer.new(); music.bus = "Music"
-	var ms: AudioStreamWAV = load("res://assets/audio/music.wav")
-	ms.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	ms.loop_begin = 0
-	ms.loop_end = int(ms.get_length() * ms.mix_rate)
-	music.stream = ms; music.volume_db = -8.0
+	# two recorded pieces played one after the other, for ever
+	for f in MUSIC: tracks.append(load("res://assets/audio/%s.mp3" % f))
+	music.stream = tracks[0]; music.volume_db = -8.0
+	music.finished.connect(_next_track)
 	add_child(music)
 	Cfg.changed.connect(apply_volumes)
 	apply_volumes()
@@ -47,6 +49,11 @@ func _bus(bus: String, lin: float) -> void:
 	var i := AudioServer.get_bus_index(bus)
 	AudioServer.set_bus_mute(i, lin <= 0.001)
 	AudioServer.set_bus_volume_db(i, linear_to_db(maxf(lin, 0.001)))
+
+func _next_track() -> void:
+	track = (track + 1) % tracks.size()
+	music.stream = tracks[track]
+	music.play()
 
 func start_music() -> void:
 	if not music.playing: music.play()

@@ -25,12 +25,15 @@ An **iOS** preset is included as well; exporting it needs a Mac with Xcode and y
 
 ## How it plays
 
-You always play the deer. (Playing as a predator or as other animals was tried and removed.)
+You always play the deer - an elk model by WildMesh 3D (CC BY 4.0) with 35 animation clips: six gaits (sneak, slow
+walk, walk, trot, run, sprint) chosen by ground speed, each with left / right turning versions, grazing, a jump,
+flinches, deaths, and sitting / lying down after 20 s / 45 s of standing still (resting refills stamina faster). (Playing as a predator or as other animals was tried and removed.)
 
 One real minute is one game hour, so a full day lasts 24 minutes. Later levels start later in the day so that dusk
 and night still fall inside them; endless mode starts at 15:00.
 
-The background music is a calm nature loop (flute, harp, birdsong, a stream) synthesised by `tools/build_music.py`.
+The background music is two recorded pieces by Kevin MacLeod played in turn ("Enchanted Valley", "Ascending the
+Vale", CC BY 4.0 - the credit in `CREDITS.md` must stay in the game).
 Other plant-eaters are not afraid of you; they only run from hunters.
 
 The forest mixes eleven kinds of living tree (broadleaf, willow, birch, pine, palm), three kinds of dead tree and
@@ -85,7 +88,7 @@ All tests start the real game scene and drive it (no display or GPU needed):
 
 ```
 godot --headless --path . --import          # once
-godot --headless --path . -- --test         # 143 feature checks, exit code 0 = all passed
+godot --headless --path . -- --test         # 155 feature checks, exit code 0 = all passed
 godot --headless --path . -- --test-perf    # draw-call / triangle budget at 24 view points per preset
 godot --headless --path . -- --soak=600     # a bot plays for 600 s and prints memory, objects, orphan nodes
 ```
