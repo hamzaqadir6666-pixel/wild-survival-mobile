@@ -445,16 +445,20 @@ func _tests() -> void:
 	check("wolves appear from level 3", not D.LEVELS[0].hunters.has("wolf") and not D.LEVELS[1].hunters.has("wolf") and D.LEVELS[2].hunters.wolf == 3)
 	check("last level has about 48 hunters", D.hunter_total(D.LEVELS[7]) == 48)
 
-	# ---------------- prey flees from the deer
+	# ---------------- other plant-eaters are not afraid of the player
 	var gz: Prey = null
 	for a3 in g.fauna.prey:
 		if a3.alive and a3.species == "gazelle": gz = a3; break
 	_place(gz.position.x + 4.0, gz.position.z)
 	var fled := false
-	for i in 1500:
+	c.move = Vector2(0, 1); c.sprint = true      # even running around right next to it
+	for i in 240:
 		await get_tree().process_frame
+		if i % 40 == 0: _place(gz.position.x + 3.0, gz.position.z)
 		if gz.state == Prey.FLEE: fled = true; break
-	check("gazelle flees when the deer comes close", fled)
+	c.move = Vector2.ZERO; c.sprint = false
+	check("other animals stay calm when the player comes close", not fled)
+	check("background music is the nature loop", Sfx.music.stream.resource_path.ends_with("music.wav") and Sfx.music.stream.get_length() > 60.0)
 	check("wildlife seen counter increases", g.fauna.seen_count() >= 1, "(%d / 16)" % g.fauna.seen_count())
 
 	# ---------------- roaming hunter

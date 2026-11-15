@@ -31,6 +31,9 @@ health, stamina and jump. (Playing as a predator was tried and removed.)
 One real minute is one game hour, so a full day lasts 24 minutes. Later levels start later in the day so that dusk
 and night still fall inside them; endless mode starts at 15:00.
 
+The background music is a calm nature loop (flute, harp, birdsong, a stream) synthesised by `tools/build_music.py`.
+Other plant-eaters are not afraid of you; they only run from hunters.
+
 When a hunter charges you, the calm music fades out, a chase loop starts and a heartbeat gets faster the closer the
 hunter is. Both loops are synthesised by `tools/build_chase_audio.py`.
 
@@ -69,7 +72,7 @@ All tests start the real game scene and drive it (no display or GPU needed):
 
 ```
 godot --headless --path . --import          # once
-godot --headless --path . -- --test         # 130 feature checks, exit code 0 = all passed
+godot --headless --path . -- --test         # 131 feature checks, exit code 0 = all passed
 godot --headless --path . -- --test-perf    # draw-call / triangle budget at 24 view points per preset
 godot --headless --path . -- --soak=600     # a bot plays for 600 s and prints memory, objects, orphan nodes
 ```

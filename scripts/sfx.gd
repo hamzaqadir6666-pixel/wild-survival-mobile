@@ -31,8 +31,10 @@ func _ready() -> void:
 		var p := AudioStreamPlayer.new(); p.stream = s; p.bus = LOOP_BUS.get(n, "Ambience"); p.volume_db = -60.0; add_child(p)
 		loops[n] = p; loop_target[n] = 0.0
 	music = AudioStreamPlayer.new(); music.bus = "Music"
-	var ms = load("res://assets/audio/music.ogg")
-	if ms is AudioStreamOggVorbis: ms.loop = true
+	var ms: AudioStreamWAV = load("res://assets/audio/music.wav")
+	ms.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	ms.loop_begin = 0
+	ms.loop_end = int(ms.get_length() * ms.mix_rate)
 	music.stream = ms; music.volume_db = -8.0
 	add_child(music)
 	Cfg.changed.connect(apply_volumes)

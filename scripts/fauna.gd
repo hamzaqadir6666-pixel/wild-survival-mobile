@@ -155,9 +155,7 @@ func hunter_gave_up(_pred: Predator) -> void:
 
 ## x, y = position of the danger, z > 0 when there is one
 func threat_near(a: Prey) -> Vector3:
-	var d := a.dist_to(deer.position)
-	if deer.alive and (d < 7.0 or (d < 15.0 and deer.speed > 5.0)):
-		return Vector3(deer.position.x, deer.position.z, 1.0)
+	# the player is a plant-eater too: other animals are not afraid of it, only of hunters
 	for p in predators:
 		var pd: float = p.dist_to(a.position)
 		if pd < 10.0 or (pd < 32.0 and p.target == a):
