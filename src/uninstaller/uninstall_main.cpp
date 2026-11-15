@@ -254,6 +254,7 @@ INT_PTR CALLBACK UninstallDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPa
             CheckDlgButton(hDlg, IDC_UN_CTXMENU, g_opt.removeContextMenu ? BST_CHECKED : BST_UNCHECKED);
             SetDlgItemTextW(hDlg, IDC_UN_STATUS,
                             L"Click Uninstall to remove the application from this computer.");
+            SetDlgItemTextW(hDlg, IDOK, L"Uninstall");
             HWND hProgress = GetDlgItem(hDlg, IDC_UN_PROGRESS);
             SendMessageW(hProgress, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
             SendMessageW(hProgress, PBM_SETPOS, 0, 0);
@@ -312,6 +313,36 @@ INT_PTR CALLBACK UninstallDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPa
                 EndDialog(hDlg, IDCANCEL);
             }
             return TRUE;
+
+        case WM_ERASEBKGND: {
+            HDC dc = reinterpret_cast<HDC>(wParam);
+            RECT rc = {};
+            GetClientRect(hDlg, &rc);
+            // Simple two-stop vertical fill (GdiGradientFill lives in msimg32, which
+            // keeps this binary dependency-free).
+            const int height = rc.bottom - rc.top;
+            for (int y = 0; y < height; ++y) {
+                const double t = height > 1 ? static_cast<double>(y) / (height - 1) : 0.0;
+                const int r = static_cast<int>(234 + (207 - 234) * t);
+                const int g = static_cast<int>(244 + (229 - 244) * t);
+                const int b = static_cast<int>(255 + (248 - 255) * t);
+                HPEN pen = CreatePen(PS_SOLID, 1, RGB(r, g, b));
+                HGDIOBJ oldPen = SelectObject(dc, pen);
+                MoveToEx(dc, rc.left, rc.top + y, nullptr);
+                LineTo(dc, rc.right, rc.top + y);
+                SelectObject(dc, oldPen);
+                DeleteObject(pen);
+            }
+            return TRUE;
+        }
+
+        case WM_CTLCOLORSTATIC: {
+            HDC dc = reinterpret_cast<HDC>(wParam);
+            SetBkMode(dc, TRANSPARENT);
+            SetTextColor(dc, RGB(30, 52, 80));
+            static HBRUSH hollow = CreateSolidBrush(RGB(234, 244, 255));
+            return reinterpret_cast<INT_PTR>(hollow);
+        }
 
         case WM_TIMER:
             if (wParam == kCleanupTimer) {

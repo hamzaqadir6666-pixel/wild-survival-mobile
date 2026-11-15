@@ -40,7 +40,8 @@ AeroExplorerSetup.exe /S /DIR="D:\Apps\AeroExplorer" /NODESKTOPSHORTCUT /NOCONTE
 | `/NOSTARTMENUSHORTCUT` | Skip the Start Menu group |
 | `/NOCONTEXTMENU` | Skip the folder context menu entry |
 | `/NOFTPHANDLER` | Do not register the `ftp://` handler |
-| `/NOLAUNCH` | Do not start the app when finished |
+| `/NOLAUNCH` | Do not start the app when finished (silent installs already default to not launching) |
+| `/LAUNCH` | Start the app when finished, even in silent mode |
 
 A setup log is always written to `%TEMP%\AeroExplorerSetup.log`.
 

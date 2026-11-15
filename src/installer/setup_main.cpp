@@ -1333,6 +1333,17 @@ INT_PTR CALLBACK SetupDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
                 case IDC_BROWSE_BTN:
                     BrowseForFolder();
                     return TRUE;
+                case IDC_PATH_EDIT:
+                    if (code == EN_CHANGE && g_state.page == Page::Destination) {
+                        wchar_t buf[MAX_PATH * 2] = {};
+                        GetDlgItemTextW(hDlg, IDC_PATH_EDIT, buf, MAX_PATH * 2);
+                        std::wstring typed = buf;
+                        if (!typed.empty()) {
+                            g_state.installDir = typed;
+                            UpdateSpaceLabels();
+                        }
+                    }
+                    return TRUE;
                 default:
                     break;
             }
@@ -1371,6 +1382,8 @@ void ParseCommandLine(SetupState& state) {
         if (_wcsicmp(arg.c_str(), L"/S") == 0 || _wcsicmp(arg.c_str(), L"/SILENT") == 0 ||
             _wcsicmp(arg.c_str(), L"/VERYSILENT") == 0) {
             state.silent = true;
+            // Unattended runs should not pop a window when they finish.
+            state.launchApp = false;
         } else if (_wcsnicmp(arg.c_str(), L"/DIR=", 5) == 0) {
             std::wstring dir = arg.substr(5);
             if (dir.size() >= 2 && dir.front() == L'"' && dir.back() == L'"') {
@@ -1388,6 +1401,8 @@ void ParseCommandLine(SetupState& state) {
             state.associateFtp = false;
         } else if (_wcsicmp(arg.c_str(), L"/NOLAUNCH") == 0) {
             state.launchApp = false;
+        } else if (_wcsicmp(arg.c_str(), L"/LAUNCH") == 0) {
+            state.launchApp = true;
         }
     }
     LocalFree(argv);
