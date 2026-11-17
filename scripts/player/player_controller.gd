@@ -188,21 +188,26 @@ func _build_animation_player(p_model: Node3D) -> void:
 		anim.play(first)
 
 
+## Godot already set loop_mode from the glTF "_Loop" suffixes on import, so only
+## correct the handful of clips it could not decide (and the walking variants
+## the exporter marks as one-shots).
+const LOOPING_CLIPS := [
+	"Idle", "Walk", "Jog_Fwd", "Sprint", "Crouch_Idle", "Crouch_Fwd",
+	"Pistol_Idle", "Idle_FoldArms", "Idle_Talking", "Walk_Formal",
+	"Sitting_Idle", "Consume",
+]
+
+
 func _configure_animation(player: AnimationPlayer) -> void:
-	var lib := player.get_animation_library("")
-	for clip in lib.get_animation_list():
-		var a := lib.get_animation(clip)
-		if a == null:
-			continue
-		if clip in ["Walk_Loop", "Jog_Fwd_Loop", "Sprint_Loop", "Idle_Loop", "Crouch_Idle_Loop",
-				"Crouch_Fwd_Loop", "Pistol_Idle_Loop", "Swim_Idle_Loop", "Idle_FoldArms_Loop",
-				"Idle_Talking_Loop", "Farm_Watering", "TreeChopping_Loop", "Walk_Carry_Loop"]:
+	for clip in LOOPING_CLIPS:
+		var a := player.get_animation(clip) if player.has_animation(clip) else null
+		if a:
 			a.loop_mode = Animation.LOOP_LINEAR
-		else:
-			a.loop_mode = Animation.LOOP_NONE
-	var idle := player.get_animation("Idle_Loop") if player.has_animation("Idle_Loop") else player.get_animation("Idle")
-	if idle:
-		idle.loop_mode = Animation.LOOP_LINEAR
+	for one_shot in ["Pistol_Shoot", "Pistol_Reload", "Jump_Start", "Jump_Land",
+			"Interact", "Hit_Chest", "Hit_Head", "Hit_Knockback", "Death01", "Roll", "Yes"]:
+		var b := player.get_animation(one_shot) if player.has_animation(one_shot) else null
+		if b:
+			b.loop_mode = Animation.LOOP_NONE
 
 
 func _unhandled_input(event: InputEvent) -> void:

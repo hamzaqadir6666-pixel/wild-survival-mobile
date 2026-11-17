@@ -57,7 +57,7 @@ func setup(p_model: Node3D, p_name: String, p_role: int) -> void:
 		anim = aps[0]
 		for clip in anim.get_animation_library("").get_animation_list():
 			var a := anim.get_animation(clip)
-			if clip in ["Idle", "Walk", "Run", "Idle_Loop", "Walk_Loop", "Jog_Fwd_Loop"]:
+			if clip in ["Idle", "Walk", "Run", "Jog_Fwd", "Idle_Talking", "Idle_FoldArms", "Walk_Formal"]:
 				a.loop_mode = Animation.LOOP_LINEAR
 		_idle_anim = _resolve_anim("Idle_Loop")
 		_play(_idle_anim)
