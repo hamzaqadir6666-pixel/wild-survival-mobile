@@ -1,0 +1,24 @@
+# Godot 4
+.godot/
+.import/
+export.cfg
+export_credentials.cfg
+*.translation
+
+# Build output
+bin/
+build/
+*.dblite
+*.tmp
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+.idea/
+
+# Local previews & captures
+/screenshots/
+/recordings/

@@ -1,0 +1,249 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+[ext_resource type="FontFile" path="res://ui/fonts/display_serif.ttf" id="2_display"]
+[ext_resource type="FontFile" path="res://ui/fonts/body_serif.ttf" id="3_body"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn"]
+bg_color = Color(0.09, 0.06, 0.04, 0.62)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.66, 0.5, 0.27, 0.55)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(0.23, 0.13, 0.06, 0.86)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.93, 0.75, 0.4, 0.95)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.36, 0.2, 0.1, 1)
+
+[node name="TitleLayer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="TitleLayer"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 96.0
+offset_bottom = 232.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.99, 0.93, 0.76, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.05, 0.02, 1)
+theme_override_constants/outline_size = 18
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 8
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.55)
+theme_override_constants/shadow_outline_size = 12
+theme_override_fonts/font = ExtResource("2_display")
+theme_override_font_sizes/font_size = 104
+text = "DUST & IRON"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Subtitle" type="Label" parent="TitleLayer"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 232.0
+offset_bottom = 272.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.94, 0.78, 0.5, 0.92)
+theme_override_colors/font_outline_color = Color(0.08, 0.04, 0.02, 0.9)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 24
+text = "A Frontier Tale of the Red Hollow Territory"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Rule" type="ColorRect" parent="TitleLayer"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -170.0
+offset_top = 288.0
+offset_right = 170.0
+offset_bottom = 290.0
+grow_horizontal = 2
+mouse_filter = 2
+color = Color(0.93, 0.75, 0.4, 0.65)
+
+[node name="Buttons" type="VBoxContainer" parent="TitleLayer"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -8.0
+offset_right = 150.0
+offset_bottom = 314.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Continue" type="Button" parent="TitleLayer/Buttons"]
+custom_minimum_size = Vector2(300, 54)
+layout_mode = 2
+focus_mode = 2
+theme_override_colors/font_color = Color(0.97, 0.9, 0.74, 1)
+theme_override_colors/font_hover_color = Color(1, 0.97, 0.86, 1)
+theme_override_colors/font_focus_color = Color(1, 0.97, 0.86, 1)
+theme_override_colors/font_disabled_color = Color(0.6, 0.55, 0.47, 0.7)
+theme_override_colors/font_outline_color = Color(0.06, 0.03, 0.01, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_display")
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_btn")
+text = "Continue"
+
+[node name="NewGame" type="Button" parent="TitleLayer/Buttons"]
+custom_minimum_size = Vector2(300, 54)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.97, 0.9, 0.74, 1)
+theme_override_colors/font_hover_color = Color(1, 0.97, 0.86, 1)
+theme_override_colors/font_focus_color = Color(1, 0.97, 0.86, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.03, 0.01, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_display")
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
+text = "New Game"
+
+[node name="Settings" type="Button" parent="TitleLayer/Buttons"]
+custom_minimum_size = Vector2(300, 54)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.97, 0.9, 0.74, 1)
+theme_override_colors/font_hover_color = Color(1, 0.97, 0.86, 1)
+theme_override_colors/font_focus_color = Color(1, 0.97, 0.86, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.03, 0.01, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_display")
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
+text = "Settings"
+
+[node name="Controls" type="Button" parent="TitleLayer/Buttons"]
+custom_minimum_size = Vector2(300, 54)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.97, 0.9, 0.74, 1)
+theme_override_colors/font_hover_color = Color(1, 0.97, 0.86, 1)
+theme_override_colors/font_focus_color = Color(1, 0.97, 0.86, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.03, 0.01, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_display")
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
+text = "Controls"
+
+[node name="Quit" type="Button" parent="TitleLayer/Buttons"]
+custom_minimum_size = Vector2(300, 54)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.97, 0.9, 0.74, 1)
+theme_override_colors/font_hover_color = Color(1, 0.97, 0.86, 1)
+theme_override_colors/font_focus_color = Color(1, 0.97, 0.86, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.03, 0.01, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_display")
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
+text = "Quit"
+
+[node name="Status" type="Label" parent="TitleLayer"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -150.0
+offset_bottom = -112.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.95, 0.86, 0.66, 0.88)
+theme_override_colors/font_outline_color = Color(0.05, 0.03, 0.01, 0.9)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 21
+text = "A frontier tale by Red Hollow Games"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Footer" type="Label" parent="TitleLayer"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -66.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.86, 0.77, 0.6, 0.62)
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 17
+text = "ENTER  ride   ·   ESC  quit"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="pressed" from="TitleLayer/Buttons/Continue" to="." method="_on_continue"]
+[connection signal="pressed" from="TitleLayer/Buttons/NewGame" to="." method="_on_new_game"]
+[connection signal="pressed" from="TitleLayer/Buttons/Settings" to="." method="_on_settings"]
+[connection signal="pressed" from="TitleLayer/Buttons/Controls" to="." method="_on_controls"]
+[connection signal="pressed" from="TitleLayer/Buttons/Quit" to="." method="_on_quit"]
