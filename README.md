@@ -39,9 +39,26 @@ the title screen to ride into the territory.
 
 Gamepad analogue sticks and the face buttons are mapped as well.
 
+### On phones
+
+When the platform reports a touchscreen, an on-screen thumb stick, look pad and
+fire / aim / jump / sprint / interact / reload / horse / map / menu buttons are
+drawn automatically (`scripts/ui/touch_controls.gd`). They press the same input
+actions as the keyboard, and the mouse is left uncaptured. Export presets for a
+Linux build and a signed Android APK live in `export_presets.cfg`; the mobile
+renderer falls back to GL Compatibility and is capped at 60 fps.
+
+Set `DUST_TOUCH_UI=1` (or `0`) to force the touch overlay on desktop for testing.
+
 ---
 
 ## What is in here
+
+### Measured on this machine (headless, 2 vCPU)
+
+World build 4.4 s, steady state 3.3 ms physics + 2.9 ms script per frame, about
+175 MB of static memory for the fully populated scene (1 300 nodes, 42 animals,
+19 NPCs, 72 terrain chunks).
 
 ### World generation
 
