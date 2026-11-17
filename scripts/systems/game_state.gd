@@ -167,8 +167,8 @@ func start_reload() -> bool:
 	var reserve := int(w["reserve"])
 	if clip >= cap or reserve <= 0:
 		return false
-	var need := cap - clip
-	var take := min(need, reserve)
+	var need: int = cap - clip
+	var take: int = mini(need, reserve)
 	w["clip"] = clip + take
 	w["reserve"] = reserve - take
 	weapons[current_weapon] = w

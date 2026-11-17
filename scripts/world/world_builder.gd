@@ -357,8 +357,8 @@ func _build_camps() -> void:
 		p.y = terrain_height(p.x, p.z)
 		var camp := Node3D.new()
 		camp.name = "Camp_%d" % i
-		camp.global_position = p
 		add_child(camp)
+		camp.global_position = p
 		_place_prop("res://assets/props/kenney/nature/tent_detailedOpen.glb", p + Vector3(0, 0.05, 0), 0.3, 3.6)
 		_place_prop("res://assets/props/kenney/nature/campfire_logs.glb", p + Vector3(3.4, 0.05, 1.2), 0.0, 2.4)
 		_place_prop("res://assets/props/kenney/nature/log.glb", p + Vector3(4.6, 0.2, 3.0), 0.4, 2.0)
@@ -387,8 +387,8 @@ func _build_bandit_camp() -> void:
 	var camp := Node3D.new()
 	camp.name = "RattlerGulch"
 	camp.add_to_group("bandit_camp")
-	camp.global_position = pos
 	add_child(camp)
+	camp.global_position = pos
 	_place_prop("res://assets/props/kenney/nature/tent_smallClosed.glb", pos + Vector3(-4, 0.05, 0), 0.2, 3.2)
 	_place_prop("res://assets/props/kenney/nature/tent_smallClosed.glb", pos + Vector3(5, 0.05, 1.5), -0.6, 3.2)
 	_place_prop("res://assets/props/kenney/nature/campfire_stones.glb", pos + Vector3(0, 0.05, -2), 0.0, 2.2)

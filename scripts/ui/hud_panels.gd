@@ -160,8 +160,8 @@ func _title(board: Control, text: String, subtitle: String = "") -> void:
 
 
 func _clock() -> String:
-	var h := int(GameState.world_time / 3600.0) % 24
-	var m := int((GameState.world_time / 60.0) % 60.0)
+	var h: int = int(GameState.world_time / 3600.0) % 24
+	var m: int = int(GameState.world_time / 60.0) % 60
 	return "%02d:%02d" % [h, m]
 
 
@@ -380,7 +380,7 @@ func _build_shop(board: Control) -> void:
 		var price_l := _label("$%d" % int(it["price"]), 19, Color(0.72, 0.86, 0.6))
 		price_l.position = Vector2(row.size.x - 190, 13)
 		row.add_child(price_l)
-		var item := it
+		var item: Dictionary = it
 		_button(row, "Buy", Vector2(row.size.x - 100, 6), Vector2(88, 40), func() -> void:
 			if GameState.money < int(item["price"]):
 				GameState.notify("Not enough money.", 2.0)

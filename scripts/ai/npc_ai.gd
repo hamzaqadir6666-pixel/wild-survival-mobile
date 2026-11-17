@@ -59,7 +59,7 @@ func setup(p_model: Node3D, p_name: String, p_role: int) -> void:
 			var a := anim.get_animation(clip)
 			if clip in ["Idle", "Walk", "Run", "Idle_Loop", "Walk_Loop", "Jog_Fwd_Loop"]:
 				a.loop_mode = Animation.LOOP_LINEAR
-		_idle_anim = "Idle" if anim.has_animation("Idle") else "Idle_Loop"
+		_idle_anim = _resolve_anim("Idle_Loop")
 		_play(_idle_anim)
 	match role:
 		Role.BANDIT:
@@ -85,11 +85,28 @@ func set_schedule(points: Array[Vector3]) -> void:
 	_waypoint_index = 0
 
 
+## Godot's glTF importer strips a trailing "_Loop" and sets loop mode from it,
+## so "Idle_Loop" arrives as "Idle". Accept either spelling.
+func _resolve_anim(clip: String) -> String:
+	if anim == null:
+		return ""
+	if anim.has_animation(clip):
+		return clip
+	if clip.ends_with("_Loop"):
+		var base := clip.trim_suffix("_Loop")
+		if anim.has_animation(base):
+			return base
+	elif anim.has_animation(clip + "_Loop"):
+		return clip + "_Loop"
+	return ""
+
+
 func _play(name: String) -> void:
-	if anim == null or not anim.has_animation(name):
+	var clip := _resolve_anim(name)
+	if clip == "":
 		return
-	if anim.current_animation != name:
-		anim.play(name, 0.25)
+	if anim.current_animation != clip:
+		anim.play(clip, 0.25)
 
 
 func _physics_process(delta: float) -> void:
@@ -198,10 +215,10 @@ func _update_anim(_delta: float) -> void:
 	if anim == null:
 		return
 	if speed > run_speed * 0.65:
-		_play("Run" if anim.has_animation("Run") else "Jog_Fwd_Loop")
+		_play("Jog_Fwd_Loop")
 	elif speed > 0.25:
-		_play("Walk" if anim.has_animation("Walk") else "Walk_Loop")
-	elif _talk_timer > 0.0 and anim.has_animation("Idle_Talking_Loop"):
+		_play("Walk_Loop")
+	elif _talk_timer > 0.0 and _resolve_anim("Idle_Talking_Loop") != "":
 		_play("Idle_Talking_Loop")
 	else:
 		_play(_idle_anim)
@@ -229,7 +246,7 @@ func _npc_shoot(target: Node3D) -> void:
 	dir += Vector3(randf_range(-0.04, 0.04), randf_range(-0.03, 0.03), randf_range(-0.04, 0.04))
 	AudioManager.play_sfx_3d("shot_revolver", global_position, get_parent(), 0.0, randf_range(0.92, 1.05), 140.0)
 	FXManager.spawn_muzzle_flash(global_position + Vector3(0, 1.4, 0), dir)
-	_play("Pistol_Shoot" if anim and anim.has_animation("Pistol_Shoot") else _idle_anim)
+	_play("Pistol_Shoot")
 	if randf() < 0.55 and dist < 34.0:
 		# aim error shrinks with skill
 		var hit_roll := randf()

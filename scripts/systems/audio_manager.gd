@@ -129,7 +129,7 @@ func play_sfx(id: String, pitch: float = 1.0, volume_db: float = 0.0) -> void:
 	if not _streams.has(id):
 		if not SFX.has(id):
 			return
-		var p := SFX[id]
+		var p: String = str(SFX[id])
 		if not ResourceLoader.exists(p):
 			return
 		_streams[id] = load(p)
@@ -145,11 +145,11 @@ func play_sfx_3d(id: String, pos: Vector3, parent: Node = null, volume_db: float
 	if not _streams.has(id):
 		if not SFX.has(id):
 			return
-		var p := SFX[id]
+		var p: String = str(SFX[id])
 		if not ResourceLoader.exists(p):
 			return
 		_streams[id] = load(p)
-	var target_parent := parent
+	var target_parent: Node = parent
 	if target_parent == null:
 		target_parent = get_tree().current_scene
 	if target_parent == null:

@@ -69,11 +69,28 @@ func _model_aabb() -> AABB:
 	return total
 
 
+## Godot's glTF importer strips a trailing "_Loop" and sets loop mode from it,
+## so "Idle_Loop" arrives as "Idle". Accept either spelling.
+func _resolve_anim(clip: String) -> String:
+	if anim == null:
+		return ""
+	if anim.has_animation(clip):
+		return clip
+	if clip.ends_with("_Loop"):
+		var base := clip.trim_suffix("_Loop")
+		if anim.has_animation(base):
+			return base
+	elif anim.has_animation(clip + "_Loop"):
+		return clip + "_Loop"
+	return ""
+
+
 func _play(name: String) -> void:
-	if anim == null or not anim.has_animation(name):
+	var clip := _resolve_anim(name)
+	if clip == "":
 		return
-	if anim.current_animation != name:
-		anim.play(name, 0.25)
+	if anim.current_animation != clip:
+		anim.play(clip, 0.25)
 
 
 func _physics_process(delta: float) -> void:

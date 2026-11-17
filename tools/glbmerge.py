@@ -204,11 +204,12 @@ def attach_rigid(b, js, binchunk, attach_path, parent_name, offset=(0, 0, 0), sc
     n = {'name': 'attach_' + parent_name, 'mesh': newmeshes[0]}
     if len(newmeshes) > 1:
         n['children'] = []
-    # append node and parent it to the joint node
+    # append node and parent it to the joint node. NOTE: parent it inside the
+    # builder's own node list -- copying js['nodes'] back over b.js['nodes'] here
+    # would drop the node we just appended and leave a dangling child index.
     b.js['nodes'].append(n)
     newidx = len(b.js['nodes']) - 1
-    js['nodes'][jidx].setdefault('children', []).append(newidx)
-    b.js['nodes'] = json.loads(json.dumps(js['nodes']))
+    b.js['nodes'][jidx].setdefault('children', []).append(newidx)
     return newidx
 
 

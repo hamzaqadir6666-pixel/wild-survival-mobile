@@ -183,7 +183,9 @@ func _build_animation_player(p_model: Node3D) -> void:
 		anim = ap[0]
 	anim.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
 	_configure_animation(anim)
-	anim.play("Idle_Loop")
+	var first := _resolve_anim("Idle_Loop")
+	if first != "":
+		anim.play(first)
 
 
 func _configure_animation(player: AnimationPlayer) -> void:
@@ -198,13 +200,15 @@ func _configure_animation(player: AnimationPlayer) -> void:
 			a.loop_mode = Animation.LOOP_LINEAR
 		else:
 			a.loop_mode = Animation.LOOP_NONE
-	player.get_animation("Idle_Loop").loop_mode = Animation.LOOP_LINEAR
+	var idle := player.get_animation("Idle_Loop") if player.has_animation("Idle_Loop") else player.get_animation("Idle")
+	if idle:
+		idle.loop_mode = Animation.LOOP_LINEAR
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	# while a HUD panel owns the screen, the panel handles its own keys
-	var ui := get_tree().get_first_node_in_group("hud")
-	if ui and ui.has_method("panels_open") and ui.panels_open():
+	var hud_node := get_tree().get_first_node_in_group("hud")
+	if hud_node and hud_node.has_method("panels_open") and hud_node.panels_open():
 		if event is InputEventMouseMotion:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		return
@@ -214,9 +218,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("camera_toggle"):
 		_cycle_camera()
 	elif event.is_action_pressed("pause"):
-		var ui := get_tree().get_first_node_in_group("hud")
-		if ui and ui.has_method("toggle_pause"):
-			ui.toggle_pause()
+		if hud_node and hud_node.has_method("toggle_pause"):
+			hud_node.toggle_pause()
 	elif event.is_action_pressed("aim_hold"):
 		if not mounted:
 			is_aiming = true
@@ -400,19 +403,33 @@ func _update_animation(delta: float) -> void:
 		anim.speed_scale = 1.0
 
 
-func _play_anim(name: String, blend: float = 0.2) -> void:
+## Godot's glTF importer strips a trailing "_Loop" from clip names and turns it
+## into LOOP_LINEAR, so "Idle_Loop" arrives as "Idle". Resolve both spellings.
+func _resolve_anim(clip: String) -> String:
 	if anim == null:
-		return
-	if not anim.has_animation(name):
+		return ""
+	if anim.has_animation(clip):
+		return clip
+	if clip.ends_with("_Loop"):
+		var base := clip.trim_suffix("_Loop")
+		if anim.has_animation(base):
+			return base
+	elif anim.has_animation(clip + "_Loop"):
+		return clip + "_Loop"
+	return ""
+
+func _play_anim(name: String, blend: float = 0.2) -> void:
+	var resolved := _resolve_anim(name)
+	if resolved == "":
 		# graceful fallback when a clip is named differently in the source rig
 		var fallback := _fallback_for(name)
-		if fallback == "" or not anim.has_animation(fallback):
+		resolved = _resolve_anim(fallback)
+		if resolved == "":
 			return
-		name = fallback
-	if anim.current_animation == name:
+	if anim.current_animation == resolved:
 		return
-	anim.play(name, blend)
-	animation_state = name
+	anim.play(resolved, blend)
+	animation_state = resolved
 
 
 func _fallback_for(name: String) -> String:

@@ -46,7 +46,9 @@ func spawn_impact(pos: Vector3, normal: Vector3, kind: String = "dirt") -> void:
 	root.add_child(p)
 	p.global_position = pos + normal * 0.05
 	if normal.length() > 0.01:
-		p.look_at(pos + normal, Vector3.UP)
+		# never pass an "up" that is parallel to the look direction
+		var up := Vector3.UP if absf(normal.normalized().y) < 0.95 else Vector3.FORWARD
+		p.look_at(p.global_position + normal, up)
 	p.emitting = true
 	var t := get_tree().create_timer(1.6)
 	t.timeout.connect(p.queue_free)

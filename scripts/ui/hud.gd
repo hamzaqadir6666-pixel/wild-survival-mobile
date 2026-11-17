@@ -484,7 +484,7 @@ func _draw_compass() -> void:
 			if str(o["type"]) != "reach":
 				continue
 			var target: Vector3 = o["pos"]
-			var to := target - player.global_position
+			var to: Vector3 = target - player.global_position
 			var ang2 := atan2(-to.x, -to.z)
 			var delta2 := wrapf(ang2 - cam_yaw, -PI, PI)
 			if absf(delta2) > PI * 0.55:
