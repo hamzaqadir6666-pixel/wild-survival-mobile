@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/animals/horse.gd" id="1_horse"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_horse"]
+radius = 0.5
+height = 2.0
+
+[node name="Horse" type="CharacterBody3D" groups=["horse"]]
+collision_layer = 8
+collision_mask = 33
+script = ExtResource("1_horse")
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+shape = SubResource("CapsuleShape3D_horse")

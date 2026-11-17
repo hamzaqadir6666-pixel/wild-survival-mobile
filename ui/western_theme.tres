@@ -1,0 +1,29 @@
+[gd_resource type="Theme" load_steps=4 format=3]
+
+[ext_resource type="FontFile" path="res://ui/fonts/body_serif.ttf" id="1_body"]
+[ext_resource type="FontFile" path="res://ui/fonts/display_serif.ttf" id="2_display"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tip"]
+bg_color = Color(0.09, 0.07, 0.05, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72, 0.56, 0.3, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[resource]
+default_font = ExtResource("1_body")
+default_font_size = 19
+Label/colors/font_color = Color(0.93, 0.87, 0.72, 1)
+Button/colors/font_color = Color(0.95, 0.89, 0.74, 1)
+Button/colors/font_hover_color = Color(1, 0.97, 0.86, 1)
+Button/colors/font_pressed_color = Color(1, 0.88, 0.6, 1)
+Button/colors/font_focus_color = Color(1, 0.97, 0.86, 1)
+Button/fonts/font = ExtResource("2_display")
+Button/font_sizes/font_size = 20
+TooltipPanel/styles/panel = SubResource("StyleBoxFlat_tip")
+TooltipLabel/colors/font_color = Color(0.95, 0.9, 0.78, 1)
