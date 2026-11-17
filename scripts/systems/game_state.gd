@@ -64,6 +64,10 @@ var is_new_game := true
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	reset_to_defaults()
+	# phones should not burn battery at 120 fps, and the touch stick assumes this
+	if OS.has_feature("mobile"):
+		Engine.max_fps = 60
+		DisplayServer.screen_set_keep_on(true)
 
 
 func reset_to_defaults() -> void:
