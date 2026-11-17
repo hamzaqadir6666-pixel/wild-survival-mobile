@@ -24,6 +24,7 @@ var panel_layer: Control
 var _open_panel := ""
 var _paused := false
 var _toast_tweens: Array[Tween] = []
+var _health_tween: Tween
 var _minimap_texture: ImageTexture
 var _minimap_time := 0.0
 var _wanted_icons: Array[Control] = []
@@ -41,6 +42,15 @@ func _ready() -> void:
 	_install_panels()
 	_connect_state()
 	refresh_all()
+
+
+func _exit_tree() -> void:
+	# a scene change from the paused menu must not leave the tree frozen
+	var tree := get_tree()
+	if tree == null:
+		return
+	if tree.paused:
+		tree.paused = false
 
 
 func _connect_state() -> void:
@@ -310,8 +320,11 @@ func _process(delta: float) -> void:
 
 func _on_health(cur: float, maxv: float) -> void:
 	health_bar.max_value = maxv
-	var tw := create_tween()
-	tw.tween_property(health_bar, "value", cur, 0.25)
+	# rapid hits would otherwise stack one tween per point of damage
+	if _health_tween and _health_tween.is_valid():
+		_health_tween.kill()
+	_health_tween = create_tween()
+	_health_tween.tween_property(health_bar, "value", cur, 0.25)
 
 
 func _on_stamina(cur: float, maxv: float) -> void:
