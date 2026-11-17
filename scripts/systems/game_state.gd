@@ -17,6 +17,7 @@ signal player_died()
 signal game_loaded()
 
 const SAVE_VERSION := 3
+const HEAT_DECAY_SECONDS := 25.0
 const HORSE_NAME := "Juniper"
 const PLAYER_NAME := "Silas Creed"
 
@@ -56,6 +57,7 @@ var horse_summoned := false
 var camera_mode := 0
 var difficulty := 1
 var mouse_sensitivity := 1.0
+var _heat_timer := 0.0
 var is_new_game := true
 
 
@@ -245,9 +247,26 @@ func set_objective(text: String) -> void:
 
 func set_wanted(level: int) -> void:
 	level = clampi(level, 0, 5)
+	_heat_timer = 0.0
 	if level != wanted_level:
 		wanted_level = level
 		emit_signal("wanted_level_changed", level)
+
+
+## The law cools off if you keep your nose clean: one star every 25 s of quiet.
+func _process(delta: float) -> void:
+	if wanted_level <= 0:
+		return
+	_heat_timer += delta
+	if _heat_timer >= HEAT_DECAY_SECONDS:
+		_heat_timer = 0.0
+		set_wanted(wanted_level - 1)
+
+
+func add_wanted(amount: int) -> void:
+	if amount <= 0:
+		return
+	set_wanted(wanted_level + amount)
 
 
 func register_visit(id: String, label: String) -> void:

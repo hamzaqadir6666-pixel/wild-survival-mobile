@@ -237,8 +237,7 @@ func _npc_shoot(target: Node3D) -> void:
 			target.take_damage(randf_range(4.0, 9.0), global_position)
 		else:
 			FXManager.spawn_impact(target.global_position + Vector3(0, 1.0, 0) + dir * 0.5, -dir, "dirt")
-	# NPC gunfire also alerts the law
-	GameState.set_wanted(maxi(GameState.wanted_level, 1))
+	# Bandits shooting at you is not your crime — heat comes from _die()/take_damage().
 
 
 func hear_gunshot(from: Vector3) -> void:
@@ -312,7 +311,7 @@ func take_damage(amount: float, _pos: Vector3 = Vector3.ZERO, _dir: Vector3 = Ve
 	if role == Role.BANDIT:
 		_attack_cd = 0.4
 	if role != Role.BANDIT:
-		GameState.set_wanted(mini(5, GameState.wanted_level + 1))
+		GameState.add_wanted(1)
 
 
 func _die() -> void:
@@ -332,6 +331,6 @@ func _die() -> void:
 			GameState.set_wanted(5)
 			GameState.notify("You killed the sheriff. The whole territory is hunting you.", 5.0)
 		_:
-			GameState.set_wanted(mini(5, GameState.wanted_level + 2))
+			GameState.add_wanted(2)
 			GameState.notify("%s has been killed." % display_name, 3.0)
 	_dead_timer = 0.0

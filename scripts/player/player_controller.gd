@@ -609,10 +609,10 @@ func _alert_npcs() -> void:
 	for n in get_tree().get_nodes_in_group("npcs"):
 		if n is Node3D and n.global_position.distance_to(global_position) < 70.0 and n.has_method("hear_gunshot"):
 			n.hear_gunshot(global_position)
-	GameState.set_wanted(mini(5, GameState.wanted_level + 0))  # gunfire in town raises heat below
+	# firing inside the town limits wakes the law
 	var town := get_tree().get_first_node_in_group("town")
 	if town and global_position.distance_to(town.global_position) < 85.0:
-		GameState.set_wanted(GameState.wanted_level + 1)
+		GameState.add_wanted(1)
 
 
 func _start_reload() -> void:
