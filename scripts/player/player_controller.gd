@@ -57,12 +57,32 @@ func _ready() -> void:
 	add_to_group("player")
 	collision_layer = 2
 	collision_mask = 1 | 32
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if not _is_touch():
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	camera_mode = clampi(GameState.camera_mode, 0, 2)
 	_apply_camera_mode(camera_mode, true)
+	_connect_touch()
 	GameState.weapon_changed.connect(_on_weapon_changed)
 	GameState.player_died.connect(_on_player_died)
 	GameState.game_loaded.connect(_on_game_loaded)
+
+
+func _is_touch() -> bool:
+	var t := get_tree().get_first_node_in_group("touch_controls")
+	return t != null and bool(t.get("enabled"))
+
+
+func _connect_touch() -> void:
+	var t := get_tree().get_first_node_in_group("touch_controls")
+	if t and t.has_signal("touch_look") and not t.touch_look.is_connected(_on_touch_look):
+		t.touch_look.connect(_on_touch_look)
+
+
+func _on_touch_look(relative: Vector2) -> void:
+	if mounted:
+		return
+	yaw -= relative.x * MOUSE_SENS * 2.4 * GameState.mouse_sensitivity
+	pitch = clampf(pitch - relative.y * MOUSE_SENS * 2.4 * GameState.mouse_sensitivity, -1.15, 0.85)
 
 
 func setup(p_model: Node3D) -> void:
