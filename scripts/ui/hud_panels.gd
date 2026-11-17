@@ -185,7 +185,7 @@ func _build_pause(board: Control) -> void:
 	var hunted := 0
 	for k in GameState.hunting_scores.keys():
 		hunted += int(GameState.hunting_scores[k])
-	var info := _label("%s   ·   $%d\nMissions complete: %d\nRelics recovered: %d / 12\nAnimals hunted: %d\nBounty: %d star%s" % [
+	var info := _label("%s   ·   $%d\nMissions complete: %d\nRelics recovered: %d / 12\nHunting bounty earned: $%d\nBounty: %d star%s" % [
 		GameState.PLAYER_NAME, GameState.money, GameState.completed_missions.size(),
 		GameState.collectibles.size(), hunted, GameState.wanted_level,
 		"" if GameState.wanted_level == 1 else "s"], 19, Color(0.82, 0.76, 0.62))
@@ -237,7 +237,8 @@ func _build_journal(board: Control) -> void:
 		ledger = "  No animals brought down yet.\n"
 	else:
 		for k in GameState.hunting_scores.keys():
-			ledger += "  ·  %s — %d taken\n" % [str(k), int(GameState.hunting_scores[k])]
+			# the ledger stores money earned per species, not a head count
+			ledger += "  ·  %s — $%d earned\n" % [str(k), int(GameState.hunting_scores[k])]
 	box.add_child(_label(ledger, 19, Color(0.8, 0.78, 0.66)))
 	_button(board, "Close", Vector2(board.size.x - 210, board.size.y - 72), Vector2(160, 46), close)
 

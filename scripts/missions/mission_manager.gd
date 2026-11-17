@@ -182,6 +182,8 @@ func _finish(id: String) -> void:
 	if not active.has(id):
 		return
 	var m: Dictionary = active[id]
+	# clear the HUD objective *before* the payout so the toast order reads right
+	GameState.set_objective("")
 	var reward := int(m.get("reward", 0))
 	GameState.add_money(reward)
 	active.erase(id)
@@ -190,7 +192,6 @@ func _finish(id: String) -> void:
 		GameState.completed_missions.append(id)
 	GameState.mission_flags[str(m.get("flag", id))] = true
 	GameState.notify("Task complete: %s  (+$%d)" % [m["title"], reward], 5.0)
-	GameState.set_objective("")
 	mission_finished.emit(id, str(m["title"]), reward)
 	# a short celebratory jingle-ish cue
 	AudioManager.play_sfx("ui_click", 0.8, -4.0)
