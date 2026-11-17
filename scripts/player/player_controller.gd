@@ -202,6 +202,12 @@ func _configure_animation(player: AnimationPlayer) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# while a HUD panel owns the screen, the panel handles its own keys
+	var ui := get_tree().get_first_node_in_group("hud")
+	if ui and ui.has_method("panels_open") and ui.panels_open():
+		if event is InputEventMouseMotion:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not mounted:
 		yaw -= event.relative.x * MOUSE_SENS * GameState.mouse_sensitivity
 		pitch = clampf(pitch - event.relative.y * MOUSE_SENS * GameState.mouse_sensitivity, -1.15, 0.85)
@@ -469,7 +475,11 @@ func _set_camera() -> void:
 		camera.v_offset = 0.0
 	if camera_mode == 2:
 		spring_arm.spring_length = 0.0
+		if model_root:
+			model_root.visible = false
 	else:
+		if model_root:
+			model_root.visible = true
 		var target_len := 3.4 if not is_aiming else 2.0
 		if is_aiming and camera_mode == 1:
 			target_len = 1.5
@@ -485,10 +495,12 @@ func _cycle_camera() -> void:
 func _apply_camera_mode(mode: int, force: bool = false) -> void:
 	camera_mode = mode
 	if mode == 2:
+		# first person: hide the body so the head doesn't fill the screen
 		spring_arm.spring_length = 0.0
 		camera.near = 0.05
+		camera.fov = 74.0 if not force else camera.fov
 		if model_root:
-			model_root.visible = true
+			model_root.visible = false
 	else:
 		spring_arm.spring_length = 3.4
 		camera.near = 0.08

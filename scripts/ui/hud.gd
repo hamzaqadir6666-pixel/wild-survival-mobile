@@ -23,13 +23,11 @@ var panel_layer: Control
 
 var _open_panel := ""
 var _paused := false
-var _panels := {}
 var _toast_tweens: Array[Tween] = []
 var _minimap_texture: ImageTexture
 var _minimap_time := 0.0
 var _wanted_icons: Array[Control] = []
 var _font_cache: Dictionary = {}
-var _print_tex: Texture2D
 var _ui_theme: Theme
 var panels: Node
 

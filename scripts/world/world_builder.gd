@@ -48,6 +48,11 @@ var sky_material: ShaderMaterial
 
 var _loaded_models: Dictionary = {}
 var _pois: Array = []
+## Omni lights are the most expensive thing we add per lamp; cap them and only
+## switch them on at night.
+const MAX_LAMP_LIGHTS := 6
+var _lamp_lights: Array[OmniLight3D] = []
+var _lamps_on := false
 
 
 func _ready() -> void:
@@ -135,6 +140,20 @@ func _build_clock_and_weather() -> void:
 	add_child(weather)
 	weather.setup(day_night, world_env, sky_material)
 	weather.set_weather(GameState.weather_state, true)
+
+
+func _process(_delta: float) -> void:
+	if _lamp_lights.is_empty() or day_night == null:
+		return
+	var night := false
+	if day_night.has_method("is_night"):
+		night = bool(day_night.is_night())
+	if night == _lamps_on:
+		return
+	_lamps_on = night
+	for l in _lamp_lights:
+		if is_instance_valid(l):
+			l.visible = night
 
 
 func get_clock() -> Node:
@@ -284,6 +303,9 @@ func _add_street_lamp(pos: Vector3) -> void:
 	head.material_override = glass
 	add_child(head)
 	head.global_position = pos + Vector3(0, 3.5, 0)
+	# Lamps burn brightest after dark; the day/night cycle toggles this flag.
+	if _lamp_lights.size() >= MAX_LAMP_LIGHTS:
+		return
 	var light := OmniLight3D.new()
 	light.light_color = Color(1.0, 0.76, 0.45)
 	light.light_energy = 2.4
@@ -292,6 +314,7 @@ func _add_street_lamp(pos: Vector3) -> void:
 	light.shadow_enabled = false
 	add_child(light)
 	light.global_position = pos + Vector3(0, 3.3, 0)
+	_lamp_lights.append(light)
 
 
 func _build_farm() -> void:
