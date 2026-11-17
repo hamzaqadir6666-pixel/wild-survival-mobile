@@ -653,11 +653,13 @@ func _update_interaction() -> void:
 			var label := "Interact"
 			if found and found.has_method("interact_prompt"):
 				label = found.interact_prompt()
-			hud.set_interact_prompt("" if found == null else label)
+			if found == null or label == "":
+				label = ""
+			hud.set_interact_prompt(label)
 
 
 func _try_interact() -> void:
-	if _interact_target and _interact_target.has_method("interact"):
+	if _interact_target and _interact_target.has_method("interact") and is_instance_valid(_interact_target):
 		_interact_target.interact(self)
 		emit_signal("interacted", _interact_target)
 		_play_anim("Interact", 0.1)

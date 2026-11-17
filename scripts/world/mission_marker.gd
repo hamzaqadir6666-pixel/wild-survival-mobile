@@ -53,6 +53,12 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
+	if GameState.completed_missions.has(mission_id):
+		# that job is done: stop advertising it
+		visible = false
+		set_process(false)
+		remove_from_group("interactable")
+		return
 	if _beam:
 		_beam.rotation.y += delta * 0.4
 	if _label:
@@ -60,11 +66,17 @@ func _process(delta: float) -> void:
 
 
 func interact_prompt() -> String:
+	if _started:
+		return ""
+	if GameState.completed_missions.has(mission_id):
+		return ""
 	return "Start mission: %s  [E]" % title
 
 
 func interact(_player: Node) -> void:
 	if _started:
+		return
+	if GameState.completed_missions.has(mission_id):
 		return
 	_started = true
 	var mm := get_tree().get_first_node_in_group("mission_manager")
