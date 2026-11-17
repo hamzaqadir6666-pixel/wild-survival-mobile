@@ -319,8 +319,6 @@ func _draw_world_map(map: Control) -> void:
 		map.draw_dashed_line(town_pt, mine_pt, Color(0.55, 0.45, 0.28, 0.7), 2.0, 6.0)
 		map.draw_dashed_line(town_pt, gulch_pt, Color(0.55, 0.45, 0.28, 0.55), 2.0, 6.0)
 	# points of interest
-	if world and "terrain" in world:
-		pass
 	if world and world.has_method("points_of_interest"):
 		for poi in world.points_of_interest():
 			var p: Vector3 = poi["pos"]

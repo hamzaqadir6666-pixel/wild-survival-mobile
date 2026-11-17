@@ -10,7 +10,7 @@ signal loaded(slot: int)
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SAVE_DIR))
+	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
 
 
 func slot_path(slot: int) -> String:
@@ -83,7 +83,7 @@ func load_game(slot: int = 0) -> bool:
 
 func delete_save(slot: int) -> void:
 	if has_save(slot):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(slot_path(slot)))
+		DirAccess.remove_absolute(slot_path(slot))
 
 
 func list_saves() -> Array:

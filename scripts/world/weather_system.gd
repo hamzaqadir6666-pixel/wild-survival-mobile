@@ -127,10 +127,9 @@ func _apply_params() -> void:
 		world_env.environment.fog_density = _params["fog"] * night_factor
 		if world_env.environment.volumetric_fog_enabled:
 			world_env.environment.volumetric_fog_density = _params["vol"]
-	if day_night and day_night.get("sun") and _params.has("sun"):
-		var s = day_night.sun
-		if s:
-			s.light_energy *= 1.0  # keep day/night authoritative; weather dims via env
+	# day/night owns the sun's position and base energy; weather only scales it
+	if day_night and day_night.get("light_scale") != null and _params.has("sun"):
+		day_night.light_scale = _params["sun"]
 
 
 func _pick_next_state() -> void:

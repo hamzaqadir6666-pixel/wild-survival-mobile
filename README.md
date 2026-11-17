@@ -18,9 +18,10 @@ godot --path . -e                    # open in the editor
 godot --headless --path . --quit-after 600
 ```
 
-The project renders with the **GL Compatibility** backend (Vulkan is optional),
-so it runs on low-end Linux boxes, phones and integrated GPUs. Populate
-`res://scenes/ui/main_menu.tscn` → **New Game** to enter the world.
+Desktop builds default to the **Forward+** renderer (SSAO, volumetric fog,
+reflections); the mobile and web overrides fall back to **GL Compatibility** so
+phones and browsers can still run it. Start the game and choose **New Game** on
+the title screen to ride into the territory.
 
 ### Controls
 

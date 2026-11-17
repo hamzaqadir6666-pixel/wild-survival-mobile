@@ -18,6 +18,8 @@ var moon: DirectionalLight3D
 var world_env: WorldEnvironment
 var sky_material: ShaderMaterial
 var _last_hour := -1
+## Multiplied into the sun's energy so the weather system can dim an overcast sky.
+var light_scale := 1.0
 
 
 func setup(p_sun: DirectionalLight3D, p_moon: DirectionalLight3D, p_env: WorldEnvironment) -> void:
@@ -90,13 +92,10 @@ func update_lighting() -> void:
 
 	if sun:
 		sun.visible = dir.y > -0.12
-		var look_at_pos := sun.global_position + (-dir)
-		if sun.global_position.distance_to(look_at_pos - (-dir)) < 0.001:
-			pass
 		sun.global_transform = Transform3D(Basis(), Vector3(0, 80, 0)).looking_at(Vector3(0, 80, 0) - dir, Vector3.UP)
 		var warm := Color(1.0, 0.94, 0.86).lerp(Color(1.0, 0.56, 0.26), golden * 0.9)
 		sun.light_color = warm
-		sun.light_energy = lerpf(0.02, 1.55, day_factor) * lerpf(1.0, 0.72, golden)
+		sun.light_energy = lerpf(0.02, 1.55, day_factor) * lerpf(1.0, 0.72, golden) * light_scale
 		sun.shadow_enabled = dir.y > 0.02
 	if moon:
 		var mdir := -dir

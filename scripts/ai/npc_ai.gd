@@ -86,7 +86,9 @@ func set_schedule(points: Array[Vector3]) -> void:
 
 
 func _play(name: String) -> void:
-	if anim and anim.has_animation(name) and anim.current_animation != name:
+	if anim == null or not anim.has_animation(name):
+		return
+	if anim.current_animation != name:
 		anim.play(name, 0.25)
 
 
@@ -170,7 +172,7 @@ func _behave(delta: float) -> void:
 		var flat := to_player
 		flat.y = 0
 		yaw = lerp_angle(yaw, atan2(flat.x, flat.z), clampf(4.0 * delta, 0.0, 1.0))
-		_play("Idle_Talking_Loop" if anim and anim.has_animation("Idle_Talking_Loop") else "Idle")
+		_play("Idle_Talking_Loop")
 		return
 
 	# schedule / patrol movement

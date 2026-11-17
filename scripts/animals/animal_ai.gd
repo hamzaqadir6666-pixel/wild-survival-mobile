@@ -130,7 +130,7 @@ func _think(delta: float) -> void:
 		speed = move_toward(speed, run_speed * 0.85, 16.0 * delta)
 		if player_dist < 2.8 and _attack_cd <= 0.0:
 			_attack_cd = 1.8
-			_play("Attack_Headbutt")
+			_play("Attack" if animal_name == "Wolf" else "Attack_Headbutt")
 			if _player.has_method("take_damage"):
 				_player.take_damage(12.0, global_position)
 		return
@@ -203,13 +203,15 @@ func _update_anim() -> void:
 	elif mood == Mood.ALERT:
 		name = "Idle_2"
 	_play(name)
-	if anim.current_animation in ["Walk", "Gallop"]:
+	if anim and anim.current_animation in ["Walk", "Gallop"]:
 		var base := walk_speed if anim.current_animation == "Walk" else run_speed
 		anim.speed_scale = clampf(speed / maxf(0.4, base), 0.55, 1.8)
 
 
 func _play(name: String) -> void:
-	if anim and anim.has_animation(name) and anim.current_animation != name:
+	if anim == null or not anim.has_animation(name):
+		return
+	if anim.current_animation != name:
 		anim.play(name, 0.2)
 
 

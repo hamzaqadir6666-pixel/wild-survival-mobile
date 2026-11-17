@@ -70,7 +70,9 @@ func _model_aabb() -> AABB:
 
 
 func _play(name: String) -> void:
-	if anim and anim.has_animation(name) and anim.current_animation != name:
+	if anim == null or not anim.has_animation(name):
+		return
+	if anim.current_animation != name:
 		anim.play(name, 0.25)
 
 
